@@ -1,5 +1,5 @@
 clear all
-% close all
+close all
 clc
 %% COSTANTS
 chirp_bw = 27e6;                                % actual chirp bandwidth 
@@ -39,46 +39,56 @@ RC = load_bin(result_file);
 disp("!!! WARNING !!! Change empirical value")
 RC = RC(:,1:98273);
 %% ESTIMATE err1
+% estimate only checking starting and ending idx of the peak
+
 [~,st_pos] = max(abs(RC(:,1)));
 [~,end_pos] = max(abs(RC(:,end)));
 diff = abs(end_pos - st_pos);
 err1= diff / (samples_per_chirp * size(RC,2));
 clear diff st_pos end_pos
+%% PEAK time-shift tracking
+[~,peak_idx] = max(abs(RC(:,1)));
+RC_peak = RC(peak_idx-10:peak_idx+10,:);
+OSF = 8;                                        %over sampling factor
+%% Peak interpolation
+x = 0:dt:dt*(size(RC_peak,1) -1);
+xq = 0:dt/OSF:dt/OSF*(size(RC_peak,1) * OSF -1);
+
+tf_men_t =xq(:) - x;
+W = sinc(chirp_bw*tf_men_t);
+RC_peak_OS = W*RC_peak;
+%%
+[~,peak_idxs] = max(RC_peak_OS);
+peak_idxs = movmean(peak_idxs,2000); 
+peak_shifts = peak_idxs -peak_idxs(1);
+% ord = 1;
+% poly_fit=   polyfit(0:length(peak_idxs)-1,peak_idxs,ord);
+% fit_y = polyval(poly_fit,0:length(peak_idxs)-1);
+% figure,plot(0:length(peak_idxs)-1,fit_y,0:length(peak_idxs)-1,peak_idxs)
+% figure,imagesc([],xq,abs(RC_peak_OS))
+
 %% TIME SHIFT CORRECTION
+norm_B = chirp_bw / chirp_sr;
+t =single( 0:size(RC_peak_OS,1)-1);
+tf = t;
+tf_men_t =tf(:) - t;
+tf_men_Dt = zeros(size(tf_men_t,1),size(tf_men_t,2),size(RC_peak_OS,2),'single');
+for i = 1:size(RC_peak_OS,2)
+    tf_men_Dt(:,:,i)= tf_men_t + peak_shifts(i);
+end
 
-x = 0:dt:dt*(size(RC,1) -1);
-fft_RC = fft(RC,[],1);
+W = sinc(norm_B*tf_men_Dt);
 
-Dt = (0:(size(fft_RC,2)-1))*PRI*err1;
-freq_ax = linspace(-chirp_sr/2,chirp_sr/2,size(fft_RC,1));
-phasor = exp(1i*2*pi*freq_ax.'*Dt);
+RC_peak_fix = zeros(size(RC_peak_OS),'like',RC_peak_OS);
+for i = 1:size(RC_peak_OS,2)
+    RC_peak_fix(:,i) = W(:,:,i)*RC_peak_OS(:,i);
+end
 
-fft_res = fft_RC .* phasor;
-RC_fix = ifft(fft_res,[],1);
+figure,subplot(2,1,1);
+imagesc(abs(RC_peak_OS))
 
-
-%% TEST
-
-% x = 0:dt:dt*(size(RC,1) -1);
-% test = repmat(sinc((x-4e-6)*27e6).',1,size(RC,2));
-% 
-% 
-% fft_RC = fft(test,[],1);
-% 
-% Dt = (0:(size(fft_RC,2)-1))*PRI*err1;
-% freq_ax = linspace(-chirp_sr/2,chirp_sr/2,size(fft_RC,1));
-% phasor = exp(1i*2*pi*freq_ax.'*Dt);
-% 
-% fft_res = fft_RC .* phasor;
-% test_fix = ifft(fft_res,[],1);
-% 
-% figure,subplot(2,1,1);
-% imagesc(abs(test))
-% 
-% subplot(2,1,2);
-% imagesc(abs(test_fix));
-
-
+subplot(2,1,2);
+imagesc(abs(RC_peak_fix))
 
 %% PLOTTING
 R_ax = -R_margin:dR:R_margin;
