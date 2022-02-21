@@ -4,6 +4,7 @@ clc
 %% COSTANTS
 chirp_bw = 27e6;                                % actual chirp bandwidth 
 chirp_sr = 30e6;                                % SDR sample rate
+norm_B = chirp_bw / chirp_sr;
 experiment_name = strcat('MULTISTATIC_GPS1_B',...
     num2str(chirp_bw/1e6),'M_S',num2str(chirp_sr/1e6),'M');
 
@@ -30,10 +31,10 @@ R_zero_shift = 57;                  % first peak is at 57m
 %% RC good up to : 98273
 addpath(genpath([pwd, filesep, 'lib' ]));       % add path of lib
 
-result_file = strcat('mat_files/radar_window_test/',...
+RC_file = strcat('mat_files/radar_window_test/',...
     experiment_name,'/RC/RC_total');
 
-RC = load_bin(result_file);
+RC = load_bin(RC_file);
 
 % WARNING : empirical value to cut RC signal
 disp("!!! WARNING !!! Change empirical value")
@@ -57,38 +58,42 @@ xq = 0:dt/OSF:dt/OSF*(size(RC_peak,1) * OSF -1);
 tf_men_t =xq(:) - x;
 W = sinc(chirp_bw*tf_men_t);
 RC_peak_OS = W*RC_peak;
-%%
+%% Peak max tracking
 [~,peak_idxs] = max(RC_peak_OS);
 peak_idxs = movmean(peak_idxs,2000); 
 peak_shifts = peak_idxs -peak_idxs(1);
-% ord = 1;
-% poly_fit=   polyfit(0:length(peak_idxs)-1,peak_idxs,ord);
-% fit_y = polyval(poly_fit,0:length(peak_idxs)-1);
-% figure,plot(0:length(peak_idxs)-1,fit_y,0:length(peak_idxs)-1,peak_idxs)
-% figure,imagesc([],xq,abs(RC_peak_OS))
-
 %% TIME SHIFT CORRECTION
-norm_B = chirp_bw / chirp_sr;
-t =single( 0:size(RC_peak_OS,1)-1);
-tf = t;
+t = 0:size(RC,1) -1;
+tf = 0:1/OSF:(size(RC,1) -1);
+
 tf_men_t =tf(:) - t;
-tf_men_Dt = zeros(size(tf_men_t,1),size(tf_men_t,2),size(RC_peak_OS,2),'single');
-for i = 1:size(RC_peak_OS,2)
-    tf_men_Dt(:,:,i)= tf_men_t + peak_shifts(i);
-end
+W = sinc(norm_B*tf_men_t);
+% interpolate whole RC signal
+RC_OS = W*RC;
 
-W = sinc(norm_B*tf_men_Dt);
+t =0:size(RC_OS,1)-1;               % centered around zero t axis
+t = t- t(round(size(RC_OS,1)/2));
 
-RC_peak_fix = zeros(size(RC_peak_OS),'like',RC_peak_OS);
-for i = 1:size(RC_peak_OS,2)
-    RC_peak_fix(:,i) = W(:,:,i)*RC_peak_OS(:,i);
-end
+Nf = 2^nextpow2(size(RC_OS,1));
+X = fftshift(fft(RC_OS,Nf,1),1);
 
-figure,subplot(2,1,1);
-imagesc(abs(RC_peak_OS))
+f = (-Nf/2:Nf/2 - 1)/Nf;
+H = exp(1i*2*pi*f(:)*peak_shifts);
+H(1,:) = 0;                         % 
 
-subplot(2,1,2);
-imagesc(abs(RC_peak_fix))
+RC_fix = ifft(ifftshift(X.* H,1),Nf,1);
+RC_fix = RC_fix(1:size(RC_OS,1),:);
+
+figure,
+subplot(2,1,1)
+imagesc(abs(RC_OS(:,1:L)))
+subplot(2,1,2)
+imagesc(abs(RC_fix(:,1:L)))
+%% 
+
+out_file = strcat('mat_files/radar_window_test/',...
+    experiment_name,'/RC/RC_time_fix');
+save_bin(out_file,RC_fix)
 
 %% PLOTTING
 R_ax = -R_margin:dR:R_margin;
