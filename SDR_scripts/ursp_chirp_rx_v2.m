@@ -2,9 +2,9 @@ clear all
 close all
 clc
 %% CONSTANTS
-addpath(genpath('lib'));       % add path of lib
+addpath(genpath('../lib'));       % add path of lib
 
-fc = 2e9;
+fc = 1.65e9;
 fs=60e6;
 dec=2;
 frame_len=1e4;     %Samples per burst
@@ -19,7 +19,7 @@ disp("SDR setup")
 rx = comm.SDRuReceiver(...
               'Platform','B210', ...
               'SerialNum','31A3D0E', ...
-              'Gain',40,...   % max gain 76
+              'Gain',60,...   % max gain 76
               'CenterFrequency',fc, ...
               'MasterClockRate',fs, ...
               'SamplesPerFrame',frame_len,...
@@ -33,7 +33,7 @@ rx = comm.SDRuReceiver(...
               );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-folder_name = 'radar_window_test';
+folder_name = '../radar_window_test';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 test_idx = 1;
 name_string=strcat(folder_name,'/data',num2str(test_idx),'.bb');
@@ -45,7 +45,7 @@ end
 % rxWriter = comm.BasebandFileWriter(name_string, ...
 %          fs/dec, rx.CenterFrequency);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-capture_time = 120; %Set the capture length in s
+capture_time = 10; %Set the capture length in s
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 maxL = ceil(capture_time * (fs/dec) / frame_len); %Number of bursts to acquire (frame_len=1e5; <-- campioni per burst)
 
