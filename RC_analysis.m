@@ -5,40 +5,32 @@ clc
 chirp_bw = 27e6;                                % actual chirp bandwidth 
 chirp_sr = 30e6;                                % SDR sample rate
 norm_B = chirp_bw / chirp_sr;
-experiment_name = strcat('MULTISTATIC_GPS1_B',...
-    num2str(chirp_bw/1e6),'M_S',num2str(chirp_sr/1e6),'M');
+% experiment_name = strcat('MULTISTATIC_GPS1_B',...
+%     num2str(chirp_bw/1e6),'M_S',num2str(chirp_sr/1e6),'M');
+experiment_name = "data5_cut1";
+% folder_name = 'mat_files/radar_window_test/';
+folder_name = 'mat_files/giuriati_test_22_02_25/RC/cut/';
 
-mat_file_raw = strcat('mat_files/radar_window_test/',...
-    experiment_name,'/chunk');
-
-mat_file = strcat('mat_files/radar_window_test/',...
-    experiment_name,'/RC/chunk');
-
-tx_wave = load(strcat('tx_waveform/tx_waveform_B',...
+tx_wave = load(strcat('tx_waveform/tx_waveform_2pow_B',...
     num2str(chirp_bw/1e6),'M_S',num2str(chirp_sr/1e6),'M.mat')).s_pad;
 tx_wave = single(tx_wave);
 samples_per_chirp = length(tx_wave);            % 22002 for 20 MSps, 33002 for 30MSps
-f0 = 2.03e9;
+f0 = 1.65e9;
 PRI = samples_per_chirp / chirp_sr;
 PRF = 1 / PRI;
 dt = 1/chirp_sr;
 dR = (physconst('LightSpeed') * dt)/2;
-R_margin = 1e3;                     % 1km of margin for RC
+R_margin = 500;                     % .5km of margin for RC
 samp_margin = floor(R_margin/dR);
 
-N_input_lags = 2^nextpow2(samples_per_chirp);
-R_zero_shift = 57;                  % first peak is at 57m
-%% RC good up to : 98273
+R_zero_shift = 10;                  % first peak real physical position
+%% RC Load
 addpath(genpath([pwd, filesep, 'lib' ]));       % add path of lib
 
-RC_file = strcat('mat_files/radar_window_test/',...
-    experiment_name,'/RC/RC_total');
+RC_file = strcat(folder_name,experiment_name);
 
 RC = load_bin(RC_file);
-
-% WARNING : empirical value to cut RC signal
-disp("!!! WARNING !!! Change empirical value")
-RC = RC(:,1:98273);
+% RC = RC(:,1:98273);
 %% ESTIMATE err1
 % estimate only checking starting and ending idx of the peak
 
@@ -86,9 +78,9 @@ RC_fix = RC_fix(1:size(RC_OS,1),:);
 
 figure,
 subplot(2,1,1)
-imagesc(abs(RC_OS(:,1:L)))
+imagesc(abs(RC_OS))
 subplot(2,1,2)
-imagesc(abs(RC_fix(:,1:L)))
+imagesc(abs(RC_fix))
 %% 
 
 out_file = strcat('mat_files/radar_window_test/',...
@@ -96,38 +88,17 @@ out_file = strcat('mat_files/radar_window_test/',...
 save_bin(out_file,RC_fix)
 
 %% PLOTTING
-R_ax = -R_margin:dR:R_margin;
-samp_shift = floor(R_zero_shift/dR);
+R_ax = -R_margin:dR/OSF:R_margin;
+samp_shift = floor(R_zero_shift/dR * OSF);
 tau_ax = linspace(0,PRI * size(RC,2),size(RC,2));
-plot_idx = find(and(R_ax >= 0,R_ax <= 200));
 
-% figure,imagesc(tau_ax,R_ax,abs(RC_centered))
-% title('RC time corrected' ),xlabel("Slow time [s]"),ylabel("Range [m]")
-
-figure,subplot(2,1,1);
-imagesc(tau_ax,R_ax,abs(circshift(RC,samp_shift,1)))
+figure,subplot(2,1,1)
+imagesc(tau_ax,R_ax,abs(circshift(RC_OS,samp_shift,1)));
 title('RC original' ),xlabel("Slow time [s]"),ylabel("Range [m]")
-
-subplot(2,1,2);
+subplot(2,1,2)
 imagesc(tau_ax,R_ax,abs(circshift(RC_fix,samp_shift,1)));
 title('RC time fixed' ),xlabel("Slow time [s]"),ylabel("Range [m]")
 
-%% Check window 
-% check with which window size we obtain the best phase linearity
-% [ ~, idx ] = max(RC_centered(:,1));
-% 
-% peak = RC_centered(idx,:);
-% win_size = 1e1:.5e3:1e4;
-% mm = zeros(length(win_size),1);
-% for j = 1:length(win_size)
-%     pipp = [];
-% for i = 1:floor(length(peak)/win_size(j))
-%     aa = peak(win_size(j) * (i-1) + 1:win_size(j) * i );
-%     pipp(i) = max(abs(fft(aa))/ sum(abs(aa)));
-% end
-% mm(j) = mean(pipp);
-% end
-% figure,plot(win_size,mm)
 %% VARIABLE Df computation
 win_size = 1024;
 RC_centered = circshift(RC_fix,samp_shift,1);
