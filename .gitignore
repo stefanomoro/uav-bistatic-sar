@@ -12,3 +12,4 @@ tt*
 tx_waveform/tx_waveform_B10M_S20M.mat
 tx_waveform/tx_waveform_B20M_S30M.mat
 *.asv
+SynchronismCorrection
