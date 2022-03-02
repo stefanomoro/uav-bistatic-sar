@@ -1,3 +1,4 @@
+binary
 figures
 FromChunksToA_rc
 mat_files
@@ -8,3 +9,6 @@ RC_analysis_mod*
 RC_analysis_*
 test*
 tt*
+tx_waveform/tx_waveform_B10M_S20M.mat
+tx_waveform/tx_waveform_B20M_S30M.mat
+*.asv
