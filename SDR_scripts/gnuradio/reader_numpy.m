@@ -1,4 +1,4 @@
-f = fopen('../../../gnuradio_data/gnuradio_56.dat', 'rb');
+f = fopen('../../../giuriati_test/giuriati_gnuradio.dat', 'rb');
 read_L = 1e9;
 values = zeros(read_L,1,"single");
 idx = 1;
