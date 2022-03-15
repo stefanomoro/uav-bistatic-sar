@@ -13,3 +13,5 @@ tx_waveform/tx_waveform_B10M_S20M.mat
 tx_waveform/tx_waveform_B20M_S30M.mat
 *.asv
 SynchronismCorrection
+giuriati_test
+radar_window_test
