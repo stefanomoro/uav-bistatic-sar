@@ -5,8 +5,7 @@ clc
 chirp_bw = 27e6;                                % actual chirp bandwidth 
 chirp_sr = 30e6;                                % SDR sample rate
 norm_B = chirp_bw / chirp_sr;
-% experiment_name = strcat('MULTISTATIC_GPS1_B',...
-%     num2str(chirp_bw/1e6),'M_S',num2str(chirp_sr/1e6),'M');
+
 experiment_name = "data5_cut1";
 % folder_name = 'mat_files/radar_window_test/';
 folder_name = 'mat_files/giuriati_test_22_02_25/RC/cut/';
@@ -100,7 +99,7 @@ peak = RC_Dt_fixed(idx,:);
 % compare magnitude of peak with closer values in t to see its stability
 % figure,plot(abs(peak)),hold on, plot(abs(RC_Dt_fixed(idx + OSF,:))),plot(abs(RC_Dt_fixed(idx - OSF,:)))
 % legend("Peak at start","Peak + 1 samples","Peak - 1 samples")
-%% Cycle 
+%% Df Cycle 
 % number of shifts of the window over the peak
 N_cycle = floor(length(peak)/win_size) * 2 - 1;
 Df = zeros(N_cycle,1); fft_max = Df; fft_angle = Df;
@@ -148,6 +147,7 @@ phasor_mat = repmat(phasor(:).',size(RC_Dt_fixed,1),1);
 RC_Df_fixed = RC_Dt_fixed .* phasor_mat;
 
 %% Final Correction
+% second step correction. Do movmean and correct again phase
 peak_phase = angle(peak_fixed);
 peak_phase_avg = movmean(peak_phase,2e3);
 
@@ -185,45 +185,3 @@ coh_sum = sum(RC_Df_fixed,2);
 coh_sum = circshift(coh_sum,samp_shift - (zero_idx-round(length(coh_sum)/2)));
 figure,plot(R_ax,abs(coh_sum));grid on; 
 title("Coherent sum of RC centered"),xlabel("Range [m]"),ylabel("Amplitude")
-
-%% Windowed dopppler
-dop_win_size = 2^nextpow2(round(1 / PRI));     % window time of 1s at least
-win_idx = 1:dop_win_size;
-N_cycle = floor(size(RC_Df_fixed,2)/dop_win_size)*2-1;
-
-slow_freq = linspace(-PRF/2,PRF/2,dop_win_size);
-speed_ax = slow_freq * lambda/2 * 3.6;
-x_idx = and(speed_ax<20,speed_ax>-20);
-y_idx = and(R_ax>=-10,R_ax<100);
-
-x = speed_ax(x_idx);
-y = R_ax(y_idx);
-
-
-fig = figure;
-images ={}; 
-RC_shifted = circshift(RC_Df_fixed,samp_shift,1);
-for i = 1:N_cycle
-    RC_doppler = fftshift(fft(RC_shifted(:,win_idx),[],2),2);
-    RC_doppler = 10*log10(RC_doppler);
-    AA = abs(RC_doppler(y_idx,x_idx));
-
-    
-    win_idx = win_idx + dop_win_size/2;
-    imagesc(x,y,AA);
-    title("Range-speed"),xlabel("speed [km/h]"),ylabel("Range [m]")
-    drawnow
-    frame = getframe(fig);
-    images{i} = frame2im(frame);
-end
-close
-%% CREATE GIF
-filename = strcat(experiment_name,'.gif'); % Specify the output file name
-for idx = 1:N_cycle
-    [A,map] = rgb2ind(images{idx},256);
-    if idx == 1
-        imwrite(A,map,filename,'gif','LoopCount',Inf,'DelayTime',1);
-    else
-        imwrite(A,map,filename,'gif','WriteMode','append','DelayTime',.1);
-    end
-end
