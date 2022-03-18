@@ -1,17 +1,16 @@
 % clear all
-close all
+% close all
 clc
 %% COSTANTS
-chirp_bw = 27e6;                                % actual chirp bandwidth 
-chirp_sr = 30e6;                                % SDR sample rate
-norm_B = chirp_bw / chirp_sr;
+norm_B = .9;
+chirp_sr = 56e6;                                % SDR sample rate
+chirp_bw = norm_B*chirp_sr;                         % actual chirp bandwidth 
 
-experiment_name = "data5_cut1";
+experiment_name = "test1_cut1";
 % folder_name = 'mat_files/radar_window_test/';
-folder_name = 'mat_files/giuriati_test_22_02_25/RC/cut/';
+folder_name = 'mat_files/giuriati_test/22_03_18/RC/cut/';
 
-tx_wave = load(strcat('tx_waveform/tx_waveform_2pow_B',...
-    num2str(chirp_bw/1e6),'M_S',num2str(chirp_sr/1e6),'M.mat')).s_pad;
+tx_wave = load(strcat('tx_waveform/tx_waveform_S56M.mat')).s_pad;
 tx_wave = single(tx_wave);
 samples_per_chirp = length(tx_wave);            % 22002 for 20 MSps, 33002 for 30MSps
 f0 = 1.65e9;
@@ -156,6 +155,13 @@ peak_fixed = peak_fixed(:).* phasor(:);
 
 phasor_mat = repmat(phasor(:).',size(RC_Df_fixed,1),1);
 RC_Df_fixed = RC_Df_fixed .* phasor_mat;
+%% SAVING
+result_file = strcat(folder_name,...
+    'fixed/',experiment_name);
+disp('Start saving fixed RC')
+save_bin(result_file,RC_Df_fixed);
+disp(['Saving done ']);
+
 
 %% PLOTTING
 R_ax = -R_margin:dR/OSF:R_margin - dR/OSF;
@@ -177,7 +183,6 @@ imagesc(tau_ax,R_ax,angle(circshift(RC_Df_fixed,samp_shift,1)));
 title('RC freq fixed' ),xlabel("Slow time [s]"),ylabel("Range [m]")
 %% Peak Phase
 figure,plot(angle(peak)),hold on,plot(angle(peak_fixed)); legend("Original","fixed")
-
 %% Coherent SUM
 coh_sum = sum(RC_Df_fixed,2);
 [ ~, zero_idx ] = max(coh_sum);
