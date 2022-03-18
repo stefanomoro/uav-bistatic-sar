@@ -2,14 +2,13 @@ clear all
 close all
 clc
 %% COSTANTS
-chirp_bw = 27e6;                                % actual chirp bandwidth 
-chirp_sr = 30e6;                                % SDR sample rate
+chirp_sr = 56e6;                                % SDR sample rate
+chirp_bw = .9*chirp_sr;                         % actual chirp bandwidth 
 
-experiment_name = 'data';
-folder_name = 'mat_files/giuriati_test_22_02_25/';
+experiment_name = 'test';
+folder_name = 'mat_files/giuriati_test/22_03_18/';
 
-tx_wave = load(strcat('tx_waveform/tx_waveform_2pow_B',...
-    num2str(chirp_bw/1e6),'M_S',num2str(chirp_sr/1e6),'M.mat')).s_pad;
+tx_wave = load(strcat('tx_waveform/tx_waveform_S56M.mat')).s_pad;
 tx_wave = single(tx_wave);
 samples_per_chirp = length(tx_wave);            % 22002 for 20 MSps, 33002 for 30MSps
 
@@ -24,14 +23,14 @@ addpath(genpath([pwd, filesep, 'lib' ]));       % add path of lib
 
 allProcTimer = tic;
 
-for exp_num = 2:2
+for exp_num = 1:1
 disp(' '),disp(['Loading raw data ' num2str(exp_num)]),tic
-A =load_bin(strcat(folder_name,'/raw/',experiment_name,num2str(exp_num))); 
+A =load_bin(strcat(folder_name,'raw/',experiment_name,num2str(exp_num))); 
 disp(['Loaded in ' num2str(toc) ' s']);
 %% RESHAPE 
-end_idx = samples_per_chirp * floor(length(A)/samples_per_chirp);
-A = A(1:end_idx);
-A = single(reshape(A,samples_per_chirp,[]));            % reshape as matrix of t X tau 
+% end_idx = samples_per_chirp * floor(length(A)/samples_per_chirp);
+% A = A(1:end_idx);
+% A = single(reshape(A,samples_per_chirp,[]));            % reshape as matrix of t X tau 
 disp('Completed alignement of first chirp')
 clear y Nchirp temp lags idx correlated start_idx end_idx
 
@@ -71,17 +70,17 @@ disp(['Saved RC data of experiment ' experiment_name num2str(exp_num)])
 disp(' ')
 end
 
-
+return
 %% CUT contiguos partition
 addpath(genpath([pwd, filesep, 'lib' ]));       % add path of lib
 
-exp_num = 5;
+exp_num = 1;
 RC_file= strcat(folder_name,'RC/complete/',experiment_name,num2str(exp_num));
 RC = load_bin(RC_file);
 
 figure,imagesc(abs(RC))
-start_idx = [1 7.45e4];
-end_idx = [6.9e4 size(RC,2)];
+start_idx = [1];
+end_idx = [size(RC,2)];
 %% Cut tau ax with empirical values
 for cut_num = 1:length(end_idx)
 
@@ -108,7 +107,7 @@ save_bin(result_file,RC_cut);
 disp(['Saved in  ' num2str(toc) ' s']);
 end
 %% PLOTTING
-shift_dist= 5;              % actual phisical zero position
+shift_dist= 10;              % actual phisical zero position
 RC_centered = circshift(RC_cut,floor(shift_dist/dR),1);
 
 t_ax = linspace(0,size(RC_centered,1) * dt,size(RC_centered,1));
