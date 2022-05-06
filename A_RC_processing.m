@@ -6,11 +6,11 @@ chirp_sr = 56e6;                                % SDR sample rate
 chirp_bw = .9*chirp_sr;                         % actual chirp bandwidth 
 
 experiment_name = 'test';
-folder_name = 'mat_files/giuriati_test/22_03_18/';
+folder_name = 'mat_files/uav/20220502/';
 
 tx_wave = load(strcat('tx_waveform/tx_waveform_S56M.mat')).s_pad;
 tx_wave = single(tx_wave);
-samples_per_chirp = length(tx_wave);            % 22002 for 20 MSps, 33002 for 30MSps
+samples_per_chirp = length(tx_wave);            % 2^15 mew, 33002 for 30MSps(old)
 
 PRI = samples_per_chirp / chirp_sr;
 PRF = 1 / PRI;
@@ -23,7 +23,7 @@ addpath(genpath([pwd, filesep, 'lib' ]));       % add path of lib
 
 allProcTimer = tic;
 
-for exp_num = 1:1
+for exp_num = 3:3
 disp(' '),disp(['Loading raw data ' num2str(exp_num)]),tic
 A =load_bin(strcat(folder_name,'raw/',experiment_name,num2str(exp_num))); 
 disp(['Loaded in ' num2str(toc) ' s']);
@@ -69,16 +69,28 @@ save_bin(dest_file,RC_cut)
 disp(['Saved RC data of experiment ' experiment_name num2str(exp_num)])
 disp(' ')
 end
+%% INSPECTION
+% plot raw data
+N_plot = 1e4;
+for i = 1:floor(size(A,2)/N_plot)
+    figure,imagesc(abs(A(:,(i-1)*N_plot +1:i*N_plot)))
+end
+%%
+% plot RC data
+N_plot = 1e4;
+for i = 1:floor(size(RC_cut,2)/N_plot)
+    figure,imagesc(abs(RC_cut(:,(i-1)*N_plot +1:i*N_plot)))
+end
 
 return
 %% CUT contiguos partition
 addpath(genpath([pwd, filesep, 'lib' ]));       % add path of lib
 
-exp_num = 1;
+exp_num = 3;
 RC_file= strcat(folder_name,'RC/complete/',experiment_name,num2str(exp_num));
 RC = load_bin(RC_file);
 
-figure,imagesc(abs(RC))
+%figure,imagesc(abs(RC))
 start_idx = [1];
 end_idx = [size(RC,2)];
 %% Cut tau ax with empirical values
@@ -107,7 +119,7 @@ save_bin(result_file,RC_cut);
 disp(['Saved in  ' num2str(toc) ' s']);
 end
 %% PLOTTING
-shift_dist= 10;              % actual phisical zero position
+shift_dist= 0;              % actual phisical zero position
 RC_centered = circshift(RC_cut,floor(shift_dist/dR),1);
 
 t_ax = linspace(0,size(RC_centered,1) * dt,size(RC_centered,1));

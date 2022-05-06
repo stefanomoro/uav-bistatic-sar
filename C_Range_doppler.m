@@ -74,12 +74,13 @@ end
 N_fft = 4*2^nextpow2(size(snapshots{1},1));
 figure
 target_idx = [];
+peak_idx_wind = 24:44;          % empirical idx where target is
 for i = 1:length(snapshots)
     RC_fft = fftshift(fft(snapshots{i},N_fft,1),1);
     freq_ax = (-N_fft/2:N_fft/2-1)/N_fft * chirp_sr * OSF;
     temp = max(abs(RC_fft),[],1);
     temp(and(speed_ax_cut<5,speed_ax_cut>-5)) = 0;
-    [~, target_idx(end + 1)] = max(temp);
+    [~, target_idx(end + 1)] = max(temp(peak_idx_wind)); target_idx(end) = target_idx(end) +peak_idx_wind(1); 
      
     
     subplot(3,1,1)
@@ -91,7 +92,7 @@ for i = 1:length(snapshots)
     subplot(3,1,3)
     
 %     ff = abs(RC_fft(:,target_idx(end)));
-    ff = mean(abs(RC_fft(:,24:44)) .^2,2);
+    ff = mean(abs(RC_fft(:,peak_idx_wind)) .^2,2);
     plot(freq_ax,ff / max(ff)), hold on
     title(['FFT of Target in ' num2str(speed_ax_cut(target_idx(end))) ' km/h'])
     xlim([-chirp_sr chirp_sr]),grid on
@@ -131,7 +132,8 @@ figure,
 plot(tgt_range,20*log10(tgt_ampl) ),grid on
 hold on
 plot(tgt_range,ampl_fitted)
-title(['Target Amplitude decay, exp: ' num2str(coeff(2)) ]),xlabel("Range [m]"),ylabel ("Amplitude [dB]")
+title(['Target Amplitude decay, exp: ' num2str(coeff(2)) ]),
+xlabel("20log10(Range) [dB]"),ylabel ("Amplitude [dB]")
 legend("Target amplitude","Fitted line")
 
 
