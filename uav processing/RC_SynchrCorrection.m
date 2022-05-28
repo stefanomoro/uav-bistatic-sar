@@ -15,9 +15,9 @@ R_ax_OS = R_ax(1):dR/OSF:R_ax(end);
 % imagesc(tau_ax,R_ax_OS,abs(RC_OS))
 % title('RC interp - abs plot' ),xlabel("Slow time [s]"),ylabel("Range [m]")
 
-clear t tf tf_men_t W OSF
+clear t tf tf_men_t W
 %%  =======================================================================  TIME SHIFT CORRECTION
-%% Find correct idxs cross-talk
+%% compute correct cross-talk idx from distance
 % define the idxs where the cross talk should be
 
 cross_talk_idxs_corr = zeros(size(tau_ax));
@@ -29,7 +29,7 @@ end
 cross_talk_idxs_corr = movmean(cross_talk_idxs_corr,1e3);
 clear idxs
 %% Cross-talk tracking
-[~,cross_talk_idxs] = max(RC_OS);
+[~,cross_talk_idxs] = max(RC_OS,[],1);
 % apply median filter and then moving average
 cross_talk_idxs = movmean(medfilt1(cross_talk_idxs,1e3) ,1000); 
 
@@ -52,98 +52,98 @@ RC_Dt_fixed = RC_Dt_fixed(1:size(RC_OS,1),:);
 
 clear Nf X f H
 %%  ======================================================================= PHASE CORRECTION
-%% find cross-talk value
-cross_talk = max(RC_Dt_fixed);
-cross_talk = movmean(cross_talk,1e3); 
-%% Find correct cross talk phase
+%% CROSSTALK phase correction
+% get crosstalk
+[~,cross_talk_idxs] = max(RC_Dt_fixed,[],1);
+% apply median filter and then moving average
+cross_talk_idxs = round(movmean(medfilt1(cross_talk_idxs,1e3) ,1e3)); 
+
+cross_talk = zeros(size(RC_Dt_fixed,2),1);
+for i = 1:length(cross_talk)
+    cross_talk(i) = RC_Dt_fixed(cross_talk_idxs(i),i);
+end
+
+%% Compute correct cross talk phase from distance
 % Correct phase
 c = physconst('Lightspeed');
-phase_corr_old = -2*pi*f0*(distance_tx_rx/c); % - 2*pi*f0*(2*speed_distance_tx_rx/lambda);
-phase_corr_old = phase_corr_old(:).';
+phase_corr = -2*pi*f0*(distance_tx_rx/c); % - 2*pi*f0*(2*speed_distance_tx_rx/lambda);
+phase_corr = phase_corr(:).';
 
 % move first phase in 2pi interval
-phase_0 = mod(phase_corr_old(1),2*pi) * 2*pi -pi;
+phase_0 = mod(phase_corr(1),2*pi) * 2*pi -pi;
 
-phase_corr = phase_corr_old - phase_corr_old(1) + phase_0;
-% 
-% figure, plot(tau_ax, unwrap(angle(cross_talk))),
-% hold on, plot(tau_ax, phase_corr),  xlabel('tau axis [s]'), ylabel('Phase axis [Hz]')
-% legend('cross talk phase','phase corr')
-% title('Cross-talk phase')
-clear phase_0 phase_corr_old
-%%   ================================================== PHASE CORRECTION BRUTAL
-% %% Df FIX 
-% computed_phase = movmean(unwrap(angle(cross_talk)),1e3);
-% phase_shift = computed_phase(:) - phase_corr(:);
-% phasor = exp(-1i*phase_shift);
-% peak_fixed = cross_talk(:).* phasor(:);
-% 
-% %% FULL Df fix
-% phasor_mat = repmat(phasor(:).',size(RC_Dt_fixed,1),1);
-% RC_Df_fixed = RC_Dt_fixed .* phasor_mat;
+phase_corr = phase_corr - phase_corr(1) + phase_0;
 
+figure, plot(tau_ax, unwrap(angle(cross_talk))),
+hold on, plot(tau_ax, phase_corr),  xlabel('tau axis [s]'), ylabel('Phase axis [Hz]')
+legend('cross talk phase','phase corr')
+title('Cross-talk phase')
+clear phase_0
 
-%%  ======================================================================= PHASE CORRECTION Correct version
+%%  ===================== PHASE CORRECTION
 
-%% Cycle 
-%number of shifts of the window over the peak
-win_size = 2^9; %1024;
-N_cycle = floor(length(cross_talk)/win_size) * 2 - 1;
-Df = zeros(N_cycle,1);
-N_fft = 8*win_size;
-freq_ax = (-N_fft/2:N_fft/2-1)/N_fft * PRF;
-win_idx = 1 : win_size;
+wind_size = 2^8;
+windowed_phase = windowedPhase(cross_talk,PRI,wind_size);
 
-check_win_size = zeros(N_cycle,1);
-for i = 1:N_cycle
-    aa = cross_talk(win_idx);
-    ff = fftshift(fft(aa,N_fft));
-    [~,ii] = max(abs(ff));
-    Df(i) = freq_ax(ii);
-    win_idx = win_idx + win_size/2;
-    
-    check_win_size(i) = max(abs(ff))/sum(abs(aa));
-end
-
-figure,plot(Df)
-title('Df from fft')
-xlabel('Slow time [samples]')
-
-
-% figure,plot(check_win_size)
-% title('check window size')
-% xlabel('Slow time [samples]')
-
-clear N_cycle N_fft freq_ax win_idx check_win_size aa
-%% INTEGRATE Df to get phase
-computed_phase = [];
-pp = angle(cross_talk(1));
-t = 0:PRI:(win_size/2-1)*PRI;
-for i = 1:length(Df)
-    pp = pp(end) + 2*pi*Df(i)*t(:);
-    computed_phase = [computed_phase; pp];
-end
-if length(computed_phase)<length(cross_talk)
-    temp = repmat(computed_phase(end),length(cross_talk)-length(computed_phase),1);
-    computed_phase = [computed_phase(:); temp]; 
-end
-% computed_phase = movmean(computed_phase,1e3);
-
-% figure,plot(unwrap(angle(cross_talk))),hold on, plot(computed_phase),  
-% legend('unwrap angle peak','computed phase'), 
-% title('Check if phase value is correct'), xlabel('Slow time [samples]')
-clear temp t pp
-%% Df FIX 
-phase_shift = computed_phase(:) - phase_corr(:);
+figure,plot(unwrap(angle(cross_talk))),hold on, plot(windowed_phase),  
+legend('unwrap angle peak','computed phase'), 
+title('Check if phase value is correct'), xlabel('Slow time [samples]')
+%% First pass phase correction 
+phase_shift = windowed_phase(:);
 phasor = exp(-1i*phase_shift);
-peak_fixed = cross_talk(:).* phasor(:);
+peak_wind_fixed = cross_talk(:).* phasor(:);
 
-% figure,plot(computed_phase),hold on,plot(phase_corr),plot(phase_shift),legend("Computed phase","Phase correct","Phase shift")
-%% FULL Df fix
+% figure,plot(unwrap(angle(peak_wind_fixed))),hold on,plot(unwrap(angle(cross_talk)))
+% legend("Corrected phase","Original phase")
+
+figure,
+subplot(2,1,1)
+plot(angle(cross_talk)),title("Original phase")
+subplot(2,1,2)
+plot(angle(peak_wind_fixed)),title("Corrected phase (FFT window approach)")
+
+%% FULL matrix correction
 phasor_mat = repmat(phasor(:).',size(RC_Dt_fixed,1),1);
 RC_Df_fixed = RC_Dt_fixed .* phasor_mat;
 
-clear phasor
+clear phasor phasor_mat
+%% Second step phase correction
+% average the phase and leave only noise
+phase_shift = movmean(unwrap(angle(peak_wind_fixed)),500);
+phasor = exp(-1i*phase_shift);
+peak_fixed = peak_wind_fixed(:).* phasor(:);
+
+figure,
+subplot(2,1,1)
+plot(angle(peak_wind_fixed)),title("Window fixed phase")
+subplot(2,1,2)
+plot(angle(peak_fixed)),title("Second step corrected phase ")
+
+%% FULL matrix correction
+phasor_mat = repmat(phasor(:).',size(RC_Dt_fixed,1),1);
+RC_Df_fixed = RC_Df_fixed .* phasor_mat;
+clear phasor phasor_mat
+
+%% FINAL phase correction with distance computed
+phase_shift = -phase_corr;
+phasor = exp(-1i*phase_shift);
+peak_final = peak_fixed(:).* phasor(:);
+
+figure,
+subplot(2,1,1)
+plot(angle(peak_fixed)),title("Stable phase fixed")
+subplot(2,1,2)
+plot(angle(peak_final)),title("Peak distance corrected")
+
+figure,
+plot(unwrap(angle(peak_final))),hold on, plot(phase_corr)
+legend("Distance corrected","Distance computed")
+title("Crosstalk final phase")
+%% FULL matrix correction
+phasor_mat = repmat(phasor(:).',size(RC_Dt_fixed,1),1);
+RC_Df_fixed = RC_Df_fixed .* phasor_mat;
+clear phasor phasor_mat
+
 %%  ======================================================================= FINAL CORRECTION RESULTS
 %% Amplitude
 figure,subplot(2,1,1)
@@ -159,16 +159,6 @@ title('RC Dt fixed' ),xlabel("Slow time [s]"),ylabel("Range [m]")
 subplot(2,1,2)
 imagesc(tau_ax,R_ax_OS,angle(RC_Df_fixed));
 title('RC freq fixed' ),xlabel("Slow time [s]"),ylabel("Range [m]")
-
-
-%% Peak Phase
-figure,plot(angle(cross_talk)),hold on,plot(angle(peak_fixed)); 
-legend("Original","Df fixed"),xlabel("Slow time [samples]"), title('Crosstalk RC')
-
-figure,plot(unwrap(angle(cross_talk))),hold on,plot(unwrap(angle(peak_fixed))),plot(phase_corr) 
-legend("Original unwrap","Df fixed unwrap","Distance based phase"),xlabel("Slow time [samples]"), title('Crosstalk RC')
-
-
 
 %% ======================================================================== OUTPUT
 RC = RC_Df_fixed;

@@ -85,7 +85,7 @@ end
 
 RX_pos = RX_pos_interp;
 
-clear old_time_ax new_time_ax
+clear old_time_ax new_time_ax RX_pos_interp
 %% Plot
 figure, plot3(RX_pos(1,:),RX_pos(2,:),RX_pos(3,:)), title('Flight path'), xlabel('x'), ylabel('y'), zlabel('z'),grid on
 
@@ -100,10 +100,7 @@ end
 figure, plot(distance_tx_rx), xlabel('N_{PRI}'), ylabel('Distance [m]'), title('distance TX RX')
 
 %% ========================================== Speed distance-TX-RX
-speed_distance_tx_rx = [0];
-for n = 2:N_PRI
-    speed_distance_tx_rx(n) = distance_tx_rx(n) - distance_tx_rx(n-1);
-end
+speed_distance_tx_rx = [0;diff(distance_tx_rx(:))];
 
 speed_distance_tx_rx = speed_distance_tx_rx ./ PRI;
 
