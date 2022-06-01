@@ -125,3 +125,91 @@ for n = 1:N_PRI
 
     end
 end
+
+%% ========================================= Rotation of the path
+% Compute the angle(to have y = const during swath)
+ang = deg2rad(90)+atan((RX_pos(2,end)-RX_pos(2,1)) /  (RX_pos(1,end)-RX_pos(1,1)));
+
+% Centre of rotation
+Xc = RX_pos(1,1);  % X cener of rotation
+Yc = RX_pos(2,1);  % Y center of rotation
+
+%% RX
+X = RX_pos(1,:);
+Y = RX_pos(2,:);
+Z = RX_pos(3,:);
+
+% Shift X/Y to the rotation center
+Xshift = X - Xc;        
+Yshift = Y - Yc;
+% Rotate the coordinates
+Xsrot =  Xshift*cos(ang) + Yshift*sin(ang);
+Ysrot = -Xshift*sin(ang) + Yshift*cos(ang);
+% Shift the rotated coordinates back to the original reference center
+Xrot = Xsrot + Xc;
+Yrot = Ysrot + Yc;
+% Assemble position matrix
+RX_pos = [Xrot;Yrot;Z];
+
+%% TX
+X = TX_pos(1,:);
+Y = TX_pos(2,:);
+Z = TX_pos(3,:);
+
+% Shift X/Y to the rotation center
+Xshift = X - Xc;        
+Yshift = Y - Yc;
+% Rotate the coordinates
+Xsrot =  Xshift*cos(ang) + Yshift*sin(ang);
+Ysrot = -Xshift*sin(ang) + Yshift*cos(ang);
+% Shift the rotated coordinates back to the original reference center
+Xrot = Xsrot + Xc;
+Yrot = Ysrot + Yc;
+% Assemble position matrix
+TX_pos = [Xrot;Yrot;Z];
+
+%% Cars
+X = cars(1,:);
+Y = cars(2,:);
+Z = cars(3,:);
+
+% Shift X/Y to the rotation center
+Xshift = X - Xc;        
+Yshift = Y - Yc;
+% Rotate the coordinates
+Xsrot =  Xshift*cos(ang) + Yshift*sin(ang);
+Ysrot = -Xshift*sin(ang) + Yshift*cos(ang);
+% Shift the rotated coordinates back to the original reference center
+Xrot = Xsrot + Xc;
+Yrot = Ysrot + Yc;
+% Assemble position matrix
+cars = [Xrot;Yrot;Z];
+
+%% Humans
+X = humans(1,:);
+Y = humans(2,:);
+Z = humans(3,:);
+
+% Shift X/Y to the rotation center
+Xshift = X - Xc;        
+Yshift = Y - Yc;
+% Rotate the coordinates
+Xsrot =  Xshift*cos(ang) + Yshift*sin(ang);
+Ysrot = -Xshift*sin(ang) + Yshift*cos(ang);
+% Shift the rotated coordinates back to the original reference center
+Xrot = Xsrot + Xc;
+Yrot = Ysrot + Yc;
+% Assemble position matrix
+humans = [Xrot;Yrot;Z];
+
+%% Plot
+figure, plot3(RX_pos(1,:),RX_pos(2,:),RX_pos(3,:)), title('Flight path'), xlabel('x'), ylabel('y'), zlabel('z')
+
+hold on,
+plot3(RX_pos(1,1),RX_pos(2,1),RX_pos(3,1),'ro'), 
+plot3(RX_pos(1,end),RX_pos(2,end),RX_pos(3,end),'go'),
+plot3(TX_pos(1,1),TX_pos(2,1),TX_pos(3,1),'ko'), plot3(cars(1,:),cars(2,:),cars(3,:),'p'), plot3(humans(1,:),humans(2,:),humans(3,:),'h')
+legend('RX drone path','start swath','end swath','TX','Cars','Humans');grid on
+
+
+

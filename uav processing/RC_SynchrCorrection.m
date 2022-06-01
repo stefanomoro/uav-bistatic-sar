@@ -85,9 +85,10 @@ clear phase_0
 wind_size = 2^8;
 windowed_phase = windowedPhase(cross_talk,PRI,wind_size);
 
-figure,plot(unwrap(angle(cross_talk))),hold on, plot(windowed_phase),  
+figure,plot(tau_ax,unwrap(angle(cross_talk))),hold on, plot(tau_ax,windowed_phase),  
 legend('unwrap angle peak','computed phase'), 
 title('Check if phase value is correct'), xlabel('Slow time [samples]')
+xlabel('tau axis [s]'), ylabel('Phase axis [Hz]')
 %% First pass phase correction 
 phase_shift = windowed_phase(:);
 phasor = exp(-1i*phase_shift);
@@ -98,10 +99,11 @@ peak_wind_fixed = cross_talk(:).* phasor(:);
 
 figure,
 subplot(2,1,1)
-plot(angle(cross_talk)),title("Original phase")
+plot(tau_ax,angle(cross_talk)),title("Original phase")
+ xlabel('tau axis [s]'), ylabel('Phase axis [Hz]')
 subplot(2,1,2)
-plot(angle(peak_wind_fixed)),title("Corrected phase (FFT window approach)")
-
+plot(tau_ax,angle(peak_wind_fixed)),title("Corrected phase (FFT window approach)")
+ xlabel('tau axis [s]'), ylabel('Phase axis [Hz]')
 %% FULL matrix correction
 phasor_mat = repmat(phasor(:).',size(RC_Dt_fixed,1),1);
 RC_Df_fixed = RC_Dt_fixed .* phasor_mat;
@@ -115,9 +117,11 @@ peak_fixed = peak_wind_fixed(:).* phasor(:);
 
 figure,
 subplot(2,1,1)
-plot(angle(peak_wind_fixed)),title("Window fixed phase")
+plot(tau_ax,angle(peak_wind_fixed)),title("Window fixed phase")
+xlabel('tau axis [s]'), ylabel('Phase axis [Hz]')
 subplot(2,1,2)
-plot(angle(peak_fixed)),title("Second step corrected phase ")
+plot(tau_ax,angle(peak_fixed)),title("Second step corrected phase ")
+xlabel('tau axis [s]'), ylabel('Phase axis [Hz]')
 
 %% FULL matrix correction
 phasor_mat = repmat(phasor(:).',size(RC_Dt_fixed,1),1);
@@ -131,14 +135,17 @@ peak_final = peak_fixed(:).* phasor(:);
 
 figure,
 subplot(2,1,1)
-plot(angle(peak_fixed)),title("Stable phase fixed")
+plot(tau_ax,angle(peak_fixed)),title("Stable phase fixed")
+xlabel('tau axis [s]'), ylabel('Phase axis [Hz]')
 subplot(2,1,2)
-plot(angle(peak_final)),title("Peak distance corrected")
+plot(tau_ax,angle(peak_final)),title("Peak distance corrected")
+xlabel('tau axis [s]'), ylabel('Phase axis [Hz]')
 
 figure,
-plot(unwrap(angle(peak_final))),hold on, plot(phase_corr)
+plot(tau_ax,unwrap(angle(peak_final))),hold on, plot(tau_ax,phase_corr)
 legend("Distance corrected","Distance computed")
 title("Crosstalk final phase")
+xlabel('tau axis [s]'), ylabel('Phase axis [Hz]')
 %% FULL matrix correction
 phasor_mat = repmat(phasor(:).',size(RC_Dt_fixed,1),1);
 RC_Df_fixed = RC_Df_fixed .* phasor_mat;

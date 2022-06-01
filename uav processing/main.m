@@ -103,21 +103,17 @@ legend('crosstalk','car','car 2','human1','human2','human3');
 % figure
 % imagesc(tau_ax,R_ax,angle(RC))
 % title('RC - angle plot' ),xlabel("Slow time [s]"),ylabel("Range [m]")
+
 %% =========================================================================== FOCUSING
-
-%% FOCUSING BY TIME DOMAIN BACK PROJECTION (TDBP)
-% In this case, we choose to focus on the plane x,y  with z = c
-
 %% Set XY grid where to focus
-y_min = -30;
-y_max = 100;
-
-
-x_min = -40;
-x_max = 200;
-pho_az = 2;
+x_min = -20;
+x_max = 100;
+pho_az = 1;
 dx = pho_az*0.4;
 x_ax =  x_min:dx:x_max;
+
+y_min = -80;
+y_max = 20;
 dy = dx;
 y_ax =  y_min:dy:y_max;
 
@@ -126,63 +122,12 @@ delta_psi_proc = lambda/pho_az;
 [X,Y] = ndgrid(x_ax,y_ax);
 
 z0 = 0;
-%% Focusing
-wbar = waitbar(0,'Backprojecting');
-Ny = length(y_ax);
-Nx = length(x_ax);
-S = zeros(Nx,Ny);
-A = S;
-% t = (0:size(RC,1)-1) *dt/OSF ;
-t = R_ax./c;
+%% 
+%run('Focusing_WnAngle.m');
 
-clear Sn    
+run('Focusing_WnWaveNumb.m');
 
-%Compute path angle
-psi_path = atan( (RX_pos(2,end)-RX_pos(2,1)) / (RX_pos(1,end)-RX_pos(1,1)) );
-psi_point = psi_path+deg2rad(90);
-
-
-for n = 1:N_PRI
-    waitbar(n/N_PRI,wbar)
-   
-    % Distance 
-    R_tx = sqrt((TX_pos(1,n)-X).^2 + (TX_pos(2,n)-Y).^2  + (TX_pos(3,n)-z0).^2); %  Range distances from the tx antenna [m]
-    R_rx = sqrt((RX_pos(1,n)-X).^2 + (RX_pos(2,n)-Y).^2  + (RX_pos(3,n)-z0).^2); %  Range distances from the rx antenna [m]
-    distance = R_tx+R_rx; %Total Tx-target-Rx distance [m]
-    delay = distance./c;    %Delay
-    
-    %Compute target angle
-    sin_psi = (RX_pos(2,n)-Y)./R_rx;
-    psi = asin(sin_psi);
-    psi_targ = psi - psi_point;
-    
-    %Activation function
-    Wn = rectpuls(psi_targ/delta_psi_proc);
-    cut = find(x_ax>RX_pos(1,n));
-    cut = cut(1);
-    Wn(1:cut,:) = zeros(size(Wn(1:cut,:)));
-%     if not(mod(n,500))
-%         imagesc(x_ax,y_ax,Wn.'),hold on
-%         plot3(drone_start_pos(1),drone_start_pos(2),drone_start_pos(3),'ro'), 
-%         plot3(drone_end_pos(1),drone_end_pos(2),drone_end_pos(3),'go'),hold off
-% 
-%         drawnow
-%     end
-
-    % Backprojection of data from a single Radar position 
-%     Sn = Wn.*interp1(t,RC(:,n),delay).*exp(1i*2*pi*f0*delay);
-    Sn = interp1(t,RC(:,n),delay).*exp(1i*2*pi*f0*delay);
-    % Coherent sum over all positions along the trajectory 
-    S = S + Sn;
-    % Inchoerent sum over all positions along the trajectory (choerent sum)
-    A = A + abs(Sn);
-end
-close(wbar)
 %%
-Focus = (S./A).';
-% Focus = S.';
-%Focus = A.';%%
-
 figure,
 imagesc(x_ax,y_ax,abs(Focus)), axis xy , 
 %title('Final Sensor Position') 
@@ -194,17 +139,7 @@ plot3(drone_start_pos(1),drone_start_pos(2),drone_start_pos(3),'ro'),
 plot3(drone_end_pos(1),drone_end_pos(2),drone_end_pos(3),'go'),
 plot3(TX_pos(1,1),TX_pos(2,1),TX_pos(3,1),'kd'), plot3(cars(1,:),cars(2,:),cars(3,:),'rp'), plot3(humans(1,:),humans(2,:),humans(3,:),'yh')
 legend('start drone track','end drone track','TX','Cars','Humans');
-%% Path and pointing vector plot
-%     x_vect = 0:dx:x_ax(end)-RX_pos(1,n);
-%     pointing = RX_pos(2,n) + (x_vect)*tan(psi_path);
-%     pointing = [ones(length(x_ax)-length(pointing),1)', pointing];
-%     hold on, plot(x_ax,pointing,'y')
-%     
-%     pointing = RX_pos(2,n) + (x_vect)*tan(psi_point);
-%     pointing = [ones(length(x_ax)-length(pointing),1)', pointing];
-%     hold on, plot(x_ax,pointing,'r')
-%     
- 
+
 %%
 figure,
 imagesc(x_ax,y_ax,10*log10(abs(Focus))), axis xy , %colormap jet
@@ -217,4 +152,3 @@ plot3(drone_start_pos(1),drone_start_pos(2),drone_start_pos(3),'ro'),
 plot3(drone_end_pos(1),drone_end_pos(2),drone_end_pos(3),'go'),
 plot3(TX_pos(1,1),TX_pos(2,1),TX_pos(3,1),'kd'), plot3(cars(1,:),cars(2,:),cars(3,:),'rp'), plot3(humans(1,:),humans(2,:),humans(3,:),'yh')
 legend('start swath','end swath','TX','Cars','Humans');
-
