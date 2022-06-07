@@ -2,7 +2,23 @@
 
 %% FOCUSING BY TIME DOMAIN BACK PROJECTION (TDBP)
 % In this case, we choose to focus on the plane x,y  with z = c
+%% Set XY grid where to focus
+x_min = -20;
+x_max = 100;
+pho_az = 1;
+dx = pho_az*0.4;
+x_ax =  x_min:dx:x_max;
 
+y_min = -80;
+y_max = 20;
+dy = dx;
+y_ax =  y_min:dy:y_max;
+
+delta_psi_proc = lambda/pho_az;
+
+[X,Y] = ndgrid(x_ax,y_ax);
+
+z0 = 0;
 %% Focusing (Wn form angle)
 
 wbar = waitbar(0,'Backprojecting');

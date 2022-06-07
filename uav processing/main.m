@@ -105,28 +105,40 @@ legend('crosstalk','car','car 2','human1','human2','human3');
 % title('RC - angle plot' ),xlabel("Slow time [s]"),ylabel("Range [m]")
 
 %% =========================================================================== FOCUSING
-%% Set XY grid where to focus
-x_min = -20;
-x_max = 100;
-pho_az = 1;
-dx = pho_az*0.4;
-x_ax =  x_min:dx:x_max;
-
-y_min = -80;
-y_max = 20;
-dy = dx;
-y_ax =  y_min:dy:y_max;
-
-delta_psi_proc = lambda/pho_az;
-
-[X,Y] = ndgrid(x_ax,y_ax);
-
-z0 = 0;
-%% 
 %run('Focusing_WnAngle.m');
 
 run('Focusing_WnWaveNumb.m');
+%%
+if exist("Focused_vec","var")
+    fig = figure;
+    images = cell(size(Focused_vec));
+    for i = 1:length(angle_vec)
+        imagesc(x_ax,y_ax,abs(Focused_vec{i})), axis xy , 
+        title(strcat("Focused image with angle ",num2str(angle_vec(i)),"°" ))
+        xlabel('[m]'), ylabel('[m]')
 
+        hold on,
+        plot3(RX_pos(1,1),RX_pos(2,1),RX_pos(3,1),'ro'), 
+        plot3(RX_pos(1,end),RX_pos(2,end),RX_pos(3,end),'go'),
+        plot3(TX_pos(1,1),TX_pos(2,1),TX_pos(3,1),'kd'), plot3(cars(1,:),cars(2,:),cars(3,:),'rp'), plot3(humans(1,:),humans(2,:),humans(3,:),'yh')
+        legend('start drone track','end drone track','TX','Cars','Humans');
+        hold off
+        frame = getframe(fig);
+        images{i} = frame2im(frame);
+    end
+% MAKE GIF
+    filename = strcat(experiment_name,'.gif'); % Specify the output file name
+    for idx = 1:length(Focused_vec)
+        [A,map] = rgb2ind(images{idx},256);
+        if idx == 1
+            imwrite(A,map,filename,'gif','LoopCount',Inf,'DelayTime',1);
+        else
+            imwrite(A,map,filename,'gif','WriteMode','append','DelayTime',.5);
+        end
+    end
+end
+
+return
 %%
 figure,
 imagesc(x_ax,y_ax,abs(Focus)), axis xy , 
