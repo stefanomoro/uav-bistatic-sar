@@ -36,7 +36,7 @@ psi_path = atan( (RX_pos(2,end)-RX_pos(2,1)) / (RX_pos(1,end)-RX_pos(1,1)) );
 psi_point = psi_path+deg2rad(90); % for case with track not rotated
 
 %Focalization wave number
-angle_vec = -70:2:70;
+angle_vec = [0];
 Focused_vec = cell(size(angle_vec));
 tic
 for ang_idx = 1:length(angle_vec)
@@ -46,6 +46,7 @@ for ang_idx = 1:length(angle_vec)
  
     S = zeros(Nx,Ny);
     Sn = S; A =S;
+    figure
     for n = 1:N_PRI
         waitbar(n/N_PRI,wbar)
 
@@ -61,14 +62,22 @@ for ang_idx = 1:length(angle_vec)
         k_rx = sin(psi).*(2*pi/lambda);
 
         %Weight function
-        Wn = rectpuls((k_rx - k_rx_0)./Dk);
+%         Wn = rectpuls((k_rx - k_rx_0)./Dk);
+        sigma = Dk/2;
+        gauss = @(x) 1/(sigma*sqrt(2*pi)) * exp(-0.5*((x)./sigma).^2); 
+        Wn = gauss(k_rx - k_rx_0);
+        
         cut = find(x_ax>RX_pos(1,n)); %Cut the otherside lobe
         cut = cut(1);
         Wn(1:cut,:) = zeros(size(Wn(1:cut,:)));
 
         % Backprojection of data from a single Radar position 
         Sn = Wn.*interp1(t,RC(:,n),delay).*exp(+1i*2*pi*f0*delay);
-
+        if mod(n,100) == 0 
+            imagesc(abs(Sn))
+            drawnow
+            pause(.5)
+        end
         % Coherent sum over all positions along the trajectory 
         S = S + Sn;
         % Inchoerent sum over all positions along the trajectory (choerent sum)

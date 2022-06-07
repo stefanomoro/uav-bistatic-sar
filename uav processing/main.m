@@ -63,9 +63,11 @@ title('RC - angle plot' ),xlabel("Slow time [s]"),ylabel("Range [m]")
 % Distance tx-rx for each PRI (cross-talk distance)
 run('DronePath')
 
-%%
-% Synchronism correction algorythm
+%% Synchronism correction algorythm
 run('RC_SynchrCorrection.m')
+
+%% GAUSS filter RC
+RC = filterGaussRC(RC,dt,OSF,.75*dt);
 
 %% Plot
 figure
@@ -108,6 +110,9 @@ legend('crosstalk','car','car 2','human1','human2','human3');
 %run('Focusing_WnAngle.m');
 
 run('Focusing_WnWaveNumb.m');
+
+%% EQUALIZE distance
+RC_eq = equalizeDistanceRC(Focus,x_ax,y_ax,z0,TX_pos,RX_pos,psi_foc);
 %%
 if exist("Focused_vec","var")
     fig = figure;
