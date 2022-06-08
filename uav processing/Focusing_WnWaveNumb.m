@@ -6,7 +6,7 @@
 x_min = -20;
 x_max = 200;
 pho_az = 1;
-dx = pho_az*0.4;
+dx = pho_az /5;
 x_ax =  x_min:dx:x_max;
 
 y_min = -100;
@@ -36,7 +36,7 @@ psi_path = atan( (RX_pos(2,end)-RX_pos(2,1)) / (RX_pos(1,end)-RX_pos(1,1)) );
 psi_point = psi_path+deg2rad(90); % for case with track not rotated
 
 %Focalization wave number
-angle_vec = [0];
+angle_vec = -35:5:35;
 Focused_vec = cell(size(angle_vec));
 tic
 for ang_idx = 1:length(angle_vec)
@@ -46,9 +46,9 @@ for ang_idx = 1:length(angle_vec)
  
     S = zeros(Nx,Ny);
     Sn = S; A =S;
-    figure
-    for n = 1:N_PRI
-        waitbar(n/N_PRI,wbar)
+%     figure
+    parfor n = 1:N_PRI
+%         waitbar(n/N_PRI,wbar)
 
         % Distance 
         R_tx = sqrt((TX_pos(1,n)-X).^2 + (TX_pos(2,n)-Y).^2  + (TX_pos(3,n)-z0).^2); %  Range distances from the tx antenna [m]
@@ -73,22 +73,24 @@ for ang_idx = 1:length(angle_vec)
 
         % Backprojection of data from a single Radar position 
         Sn = Wn.*interp1(t,RC(:,n),delay).*exp(+1i*2*pi*f0*delay);
-        if mod(n,100) == 0 
-            imagesc(abs(Sn))
-            drawnow
-            pause(.5)
-        end
+
+%         if mod(n,100) == 0 
+%             imagesc(abs(Sn))
+%             drawnow
+%         end
         % Coherent sum over all positions along the trajectory 
         S = S + Sn;
         % Inchoerent sum over all positions along the trajectory (choerent sum)
         A = A + abs(Sn);
     end
+    waitbar(1,wbar);
+    
     close(wbar)
 
 
-     Focus = (S./A)';
-    %Focus = S';
-    %Focus = A';
+% 	Focus = (S./A)';
+    Focus = S;
+%     Focus = A';
     Focused_vec{ang_idx} = Focus;
 end
 disp (strcat("Total elaboration time: ",num2str(toc/3600)," h"))

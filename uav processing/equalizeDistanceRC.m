@@ -2,7 +2,6 @@ function [Focus_eq] = equalizeDistanceRC(Focus,x_ax,y_ax,z0,TX_pos,RX_pos,psi_fo
 %EQUALIZEDISTANCERC multiply focused image for an equalizer based on distance 
 %   Detailed explanation goes here
 
-Focus = rot90(Focus);
 [X,Y] = ndgrid(x_ax,y_ax);
 R = zeros(size(X));
 

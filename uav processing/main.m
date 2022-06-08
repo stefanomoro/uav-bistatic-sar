@@ -46,10 +46,6 @@ R_ax = R_ax(idx_wind_row);
 tau_ax = tau_ax(idx_wind_col); 
 
 N_PRI = length(tau_ax);
-%%
-figure
-imagesc(abs(RC))
-title('RC - abs plot' ),xlabel("Slow time [s]"),ylabel("Range [m]")
 %% Plot
 figure
 imagesc(tau_ax,R_ax,abs(RC))
@@ -59,7 +55,7 @@ figure
 imagesc(tau_ax,R_ax,angle(RC))
 title('RC - angle plot' ),xlabel("Slow time [s]"),ylabel("Range [m]")
 
-%%  ======================================================================= SYNCHRONISM ERROR CORRECTION
+%% SYNCHRONISM ERROR CORRECTION
 % Distance tx-rx for each PRI (cross-talk distance)
 run('DronePath')
 
@@ -90,35 +86,18 @@ plot(tau_ax,distance_humans(1,:),'y'), plot(tau_ax,distance_humans(2,:),'m'),
 plot(tau_ax,distance_humans(3,:),'b')
 legend('crosstalk','car','car 2','human1','human2','human3');
 
-%% ===========================================================================  CROSSRTALK REMOVAL - BRUTAL
-% cross_talk_size_idxs = 10;
-% 
-% for n = 1:N_PRI
-%     RC(1:cross_talk_idxs_corr(n)+cross_talk_size_idxs,n) = zeros(cross_talk_idxs_corr(n)+cross_talk_size_idxs,1);
-% end
-% 
-% %% Plot
-% figure
-% imagesc(tau_ax,R_ax,abs(RC))
-% title('RC - abs plot' ),xlabel("Slow time [s]"),ylabel("Range [m]")
-% 
-% figure
-% imagesc(tau_ax,R_ax,angle(RC))
-% title('RC - angle plot' ),xlabel("Slow time [s]"),ylabel("Range [m]")
-
-%% =========================================================================== FOCUSING
-%run('Focusing_WnAngle.m');
-
+%% FOCUSING
 run('Focusing_WnWaveNumb.m');
 
 %% EQUALIZE distance
-RC_eq = equalizeDistanceRC(Focus,x_ax,y_ax,z0,TX_pos,RX_pos,psi_foc);
+Focus_eq = equalizeDistanceRC(Focus,x_ax,y_ax,z0,TX_pos,RX_pos,psi_foc);
 %%
 if exist("Focused_vec","var")
-    fig = figure;
+    fig = figure("WindowState","maximized");
     images = cell(size(Focused_vec));
     for i = 1:length(angle_vec)
-        imagesc(x_ax,y_ax,abs(Focused_vec{i})), axis xy , 
+        F = equalizeDistanceRC(Focused_vec{i},x_ax,y_ax,z0,TX_pos,RX_pos,psi_foc);
+        imagesc(x_ax,y_ax,abs(F.')), axis xy , 
         title(strcat("Focused image with angle ",num2str(angle_vec(i)),"°" ))
         xlabel('[m]'), ylabel('[m]')
 
@@ -142,13 +121,25 @@ if exist("Focused_vec","var")
         end
     end
 end
-
 return
+
 %%
 figure,
-imagesc(x_ax,y_ax,abs(Focus)), axis xy , 
+imagesc(x_ax,y_ax,abs(Focus.')), axis xy , 
 %title('Final Sensor Position') 
 title('Focused image by TDBP ')
+xlabel('azimuth [m]'), ylabel('ground range [m]')
+
+hold on,
+plot3(drone_start_pos(1),drone_start_pos(2),drone_start_pos(3),'ro'), 
+plot3(drone_end_pos(1),drone_end_pos(2),drone_end_pos(3),'go'),
+plot3(TX_pos(1,1),TX_pos(2,1),TX_pos(3,1),'kd'), plot3(cars(1,:),cars(2,:),cars(3,:),'rp'), plot3(humans(1,:),humans(2,:),humans(3,:),'yh')
+legend('start drone track','end drone track','TX','Cars','Humans');
+%%
+figure,
+imagesc(x_ax,y_ax,abs(Focus_eq.')), axis xy , 
+%title('Final Sensor Position') 
+title('Equalized Image')
 xlabel('azimuth [m]'), ylabel('ground range [m]')
 
 hold on,
@@ -159,7 +150,7 @@ legend('start drone track','end drone track','TX','Cars','Humans');
 
 %%
 figure,
-imagesc(x_ax,y_ax,10*log10(abs(Focus))), axis xy , %colormap jet
+imagesc(x_ax,y_ax,10*log10(abs(Focus.'))), axis xy , %colormap jet
 %title('Initial Sensor Position') 
 title('Focused image by TDBP - dB')
 xlabel('azimuth [m]'), ylabel('ground range [m]')
