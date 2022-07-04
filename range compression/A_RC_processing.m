@@ -6,7 +6,7 @@ chirp_sr = 56e6;                                % SDR sample rate
 chirp_bw = .9*chirp_sr;                         % actual chirp bandwidth 
 
 experiment_name = 'test';
-folder_name = 'mat_files/uav/20220502/';
+folder_name = 'mat_files/uav_test/20220502/';
 
 tx_wave = load(strcat('tx_waveform/tx_waveform_S56M.mat')).s_pad;
 tx_wave = single(tx_wave);

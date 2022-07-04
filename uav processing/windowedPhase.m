@@ -1,6 +1,6 @@
 function [windowed_phase] = windowedPhase(cross_talk,PRI,win_size)
 %WINDOWED_PHASE Summary of this function goes here
-%   Detailed explanation goes here
+%   [windowed_phase] = windowedPhase(cross_talk,PRI,win_size)
 
 %number of shifts of the window over the peak
 N_cycle = floor(length(cross_talk)/win_size) * 2 - 1;

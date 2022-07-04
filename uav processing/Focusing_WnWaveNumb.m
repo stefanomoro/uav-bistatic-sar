@@ -6,7 +6,7 @@
 x_min = -20;
 x_max = 200;
 pho_az = 1;
-dx = pho_az /5;
+dx = pho_az /4;
 x_ax =  x_min:dx:x_max;
 
 y_min = -100;
@@ -33,7 +33,7 @@ Dk = 2*pi/pho_az;
 psi_path = atan( (RX_pos(2,end)-RX_pos(2,1)) / (RX_pos(1,end)-RX_pos(1,1)) );
 
 %Compute pointing angle 
-psi_point = psi_path+deg2rad(90); % for case with track not rotated
+% psi_point = psi_path+deg2rad(90); % for case with track not rotated
 
 %Focalization wave number
 angle_vec = -35:5:35;
@@ -80,12 +80,11 @@ for ang_idx = 1:length(angle_vec)
 %         end
         % Coherent sum over all positions along the trajectory 
         S = S + Sn;
-        % Inchoerent sum over all positions along the trajectory (choerent sum)
+        % Inchoerent sum over all positions along the trajectory
         A = A + abs(Sn);
     end
-    waitbar(1,wbar);
+    waitbar(ang_idx/length(angle_vec),wbar);
     
-    close(wbar)
 
 
 % 	Focus = (S./A)';
@@ -93,4 +92,7 @@ for ang_idx = 1:length(angle_vec)
 %     Focus = A';
     Focused_vec{ang_idx} = Focus;
 end
+
+close(wbar)
+
 disp (strcat("Total elaboration time: ",num2str(toc/3600)," h"))

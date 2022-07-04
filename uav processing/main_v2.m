@@ -2,64 +2,30 @@ clear variables
 close all
 clc
 %% =============================================================================  LOAD RC MATRIX CUT IN TARGET ZONE
-%% COSTANTS
-chirp_bw = 56e6*0.9;                                % actual chirp bandwidth (B)
-chirp_sr = 56e6;                                % SDR sample rate (fs)
-norm_B = chirp_bw / chirp_sr;
-
-experiment_name = "test1_cut1";
-
-radar_folder_name = '..\mat_files\uav_test\20220502\radar\test1\';
-drone_track_folder = '..\mat_files\uav_test\20220502\drone track\';
-
-drone_data = load(strcat(drone_track_folder, 'flight1')).drone;
-radar_last_mod_date = load(strcat(radar_folder_name,'test1_last_mod_date')).last_mod_date;
-targets = load(strcat(drone_track_folder,'target.mat'));
-
-tx_wave = load(strcat('..\tx_waveform/tx_waveform_S56M.mat')).s_pad;
-tx_wave = single(tx_wave);
-samples_per_chirp = length(tx_wave);
-f0 = 1.65e9;
-lambda = physconst('LightSpeed')/f0;
-PRI = samples_per_chirp / chirp_sr;
-PRF = 1 / PRI;
-dt = 1/chirp_sr;
-dR = (physconst('LightSpeed') * dt);
-
-%% RC Load
+%% CONSTANTS
+[const] = initializeConstants();
+%% PRE-PROCESSING
 addpath(genpath('..\lib' ));       % add path of lib
-
-RC_file = strcat(radar_folder_name,experiment_name);
-
-RC = load_bin(RC_file);
-R_margin = size(RC,1)*dR;
-R_ax = -R_margin/2:dR:R_margin/2;
-tau_ax = 0:PRI:PRI*size(RC,2);
-N_PRI_tot = length(tau_ax);
-
-%% taglio sul cross talk
-idx_wind_row = 150:300;%180:230;
-%test2_1 = 1:4e4;test1_1 = 1:2.4e4
-idx_wind_col = 1:2.4e4;
-
-RC = RC(idx_wind_row,idx_wind_col);
-R_ax = R_ax(idx_wind_row); 
-tau_ax = tau_ax(idx_wind_col); 
-
-N_PRI = length(tau_ax);
-%% Plot
-figure
-imagesc(tau_ax,R_ax,abs(RC))
-title('RC - abs plot' ),xlabel("Slow time [s]"),ylabel("Range [m]")
-
-figure
-imagesc(tau_ax,R_ax,angle(RC))
-title('RC - angle plot' ),xlabel("Slow time [s]"),ylabel("Range [m]")
-
-%% SYNCHRONISM ERROR CORRECTION
-% Distance tx-rx for each PRI (cross-talk distance)
-run('DronePath')
-
+[radar,drone,targets] = loadData(const);
+% Cut processed RC
+radar = cutProcessedRC(radar);
+plotGenericRC(radar)
+% Align drone time and radar time and interpolate
+[RX,TX,radar] = alignInterpolateDroneRadarTime(const,drone,radar);
+plotDroneTrack(drone,RX,TX,targets);
+% Compute all useful distances
+scenario = computeAllDistances(const,radar,RX,TX,targets);
+%Rotate path
+[RX,TX,targets,drone] = rotateFlightPath(RX,TX,targets,drone);
+plotDroneTrack(drone,RX,TX,targets);
+%% RC Synch and correction
+% Interpolate RC
+radar = interpolateRC(const,radar);
+% Compute correct cross talk position
+[radar] = computeCorrCrossTalk(const,radar,scenario);
+[radar] = timeShiftCorrection(radar);
+[radar] = getCrossTalk(radar);
+radar = freqShiftCorrection(radar);
 %% Synchronism correction algorythm
 run('RC_SynchrCorrection.m')
 
