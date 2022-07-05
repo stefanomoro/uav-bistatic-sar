@@ -10,5 +10,5 @@ cross_talk = zeros(size(radar.RC,2),1);
 for i = 1:length(cross_talk)
     cross_talk(i) = radar.RC(cross_talk_idxs(i),i);
 end
-radar.cros_talk.value = cross_talk;
+radar.cross_talk.value = cross_talk;
 end

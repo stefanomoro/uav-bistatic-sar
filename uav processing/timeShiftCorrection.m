@@ -17,7 +17,7 @@ H = exp(1i*2*pi*f(:)*cross_talk_shifts);
 H(1,:) = 0;                         
 
 RC_Dt_fixed = ifft(ifftshift(X.* H,1),Nf,1);
-RC_Dt_fixed = RC_Dt_fixed(1:size(radar.RC_OS,1),:);
+RC_Dt_fixed = RC_Dt_fixed(1:size(radar.RC,1),:);
 
 radar.RC = RC_Dt_fixed; 
 end

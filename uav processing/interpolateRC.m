@@ -4,7 +4,7 @@ function [radar] = interpolateRC(const,radar)
  
 
 t = 0:size(radar.RC,1) -1;
-tf = 0:1/radar.OSF:(size(radar.RC,1) -1);
+tf = 0:1/const.OSF:(size(radar.RC,1) -1);
 
 tf_men_t =tf(:) - t;
 W = sinc(const.norm_B*tf_men_t);
