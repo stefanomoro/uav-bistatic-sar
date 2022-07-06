@@ -8,8 +8,8 @@ z0 = scenario.grid.z0;
 R = zeros(size(X));
 % assume transmitter static
 TX_pos = TX.pos(:,1);
-Focus_eq = cell(length(focus.angle_vec));
-for ang_idx = 1 : size(focus.angle_vec)
+Focus_eq = cell(size(focus.angle_vec));
+for ang_idx = 1 : length(focus.angle_vec)
     psi_foc = deg2rad(focus.angle_vec(ang_idx));
     Focus = focus.Focused_vec{ang_idx};
     for i = 1:size(Focus,1)
@@ -23,5 +23,6 @@ for ang_idx = 1 : size(focus.angle_vec)
 Focus_eq{ang_idx} = Focus.*R;
 end
 focus.Focus_eq = Focus_eq;
+
 end
 

@@ -30,7 +30,7 @@ x_ax = scenario.grid.x_ax;
 
 tic
 for ang_idx = 1:length(focus.angle_vec)
-    waitbar(0,wbar,strcat('Backprojecting n ',num2str(ang_idx),"/",num2str(length(focus.angle_vec))));
+    waitbar(ang_idx/length(focus.angle_vec),wbar,strcat('Backprojecting n ',num2str(ang_idx),"/",num2str(length(focus.angle_vec))));
     psi_foc = deg2rad(focus.angle_vec(ang_idx));
     k_rx_0 = sin(psi_foc).*(2*pi/const.lambda); 
  
