@@ -12,5 +12,6 @@ imagesc(scenario.grid.x_ax,scenario.grid.y_ax,abs(F.')), axis xy ,
         plot3(targets.humans(1,:),targets.humans(2,:),targets.humans(3,:),'yh')
         legend('start drone track','end drone track','TX','Cars','Humans');
         hold off
+        colorbar
 end
 
