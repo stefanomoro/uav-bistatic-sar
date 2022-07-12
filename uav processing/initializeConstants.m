@@ -1,17 +1,20 @@
-function const = initializeConstants()
+function const = initializeConstants(param)
 %INITIALIZECONSTANTS define all the needed constants for the xcript
-%   
+%   const = initializeConstants(param)
+%   param contains the hardcoded parameter of the test
 
-const.chirp_bw = 56e6*0.9;                      % actual chirp bandwidth (B)
-const.chirp_sr = 56e6;                          % SDR sample rate (fs)
+const.chirp_bw = param.chirp_bw;                      % actual chirp bandwidth (B)
+const.chirp_sr = param.chirp_sr;                          % SDR sample rate (fs)
 const.norm_B = const.chirp_bw / const.chirp_sr;
-const.f0 = 1.65e9;
+const.f0 = param.f0;
 const.OSF = 8;
 
-const.experiment_name = "test1_cut1";
+const.experiment_name = param.experiment_name;
+const.last_mod_date_file = param.last_mod_date_file;
 
-const.radar_folder_name = '..\mat_files\uav_test\20220502\radar\test1\';
-const.drone_track_folder = '..\mat_files\uav_test\20220502\drone track\';
+const.radar_folder_name = param.radar_folder_name;
+const.drone_track_folder = param.drone_track_folder;
+const.drone_track_file = param.drone_track_file;
 
 const.tx_wave = load(strcat('..\tx_waveform/tx_waveform_S56M.mat')).s_pad;
 const.tx_wave = single(const.tx_wave);
