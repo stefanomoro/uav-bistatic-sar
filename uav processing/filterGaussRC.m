@@ -5,7 +5,7 @@ L = 101;
 x_fil = ((0:L-1)-floor(L/2))*const.dt/const.OSF;
 
 g = 1/(sigma*sqrt(2*pi)) * exp(-0.5*(x_fil/sigma).^2); 
-g = g/ max(g);
+g = g/ sum(g);
 
 %% Filtering
 RC_filtr =zeros(size(radar.RC));

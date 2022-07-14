@@ -40,50 +40,34 @@ plotRC(radar,scenario,3);
 
 %% SUM all the focused angles
 
-focus_all_sum = sumAllFocusedAngle(focus.Focus_eq);
+focus_all_sum = sumAllFocusedAngle(focus.Focus_eq,1:15);
 
-figure,plotFocusedWithTargets(scenario,RX,TX,targets,10*log10(focus.Focused_vec{1}./focus.not_coh_sum{1}),...
-        "sum all angles" );        
-%%
-A = conv2(focus_all_sum,hamming(3),'same')./3;
-At = conv2(A,hamming(3).','same')./3;
-figure,imagesc(scenario.grid.x_ax,scenario.grid.y_ax,10*log10(At.'));colorbar,caxis([190 240]),axis('xy')
-%%
-idx = 15;
-figure,plotFocusedWithTargets(scenario,RX,TX,targets,10*log10(focus.Focus_eq{idx}),...
-        strcat("single image ",num2str(focus.angle_vec(idx) )));        
-caxis
+figure,plotFocusedWithTargets(scenario,RX,TX,targets,focus_all_sum,...
+        "Sum all squint,linear");      
+figure,plotFocusedWithTargets(scenario,RX,TX,targets,20*log10(focus_all_sum),...
+    "Sum all squint, dB" );   
+caxis([180 230]) 
+figure,plotFocusedWithTargets(scenario,RX,TX,targets,...
+    20*log10(filterHammingFocus(focus_all_sum,3)),...
+        "Sum all squint,dB - Hamming filtered");      
 
-%%
+
+caxis([180 230]) 
+
+%% save subplot squint
 figure
-for idx = 8:13
-subplot(2,3,idx-7)
-
-imagesc(scenario.grid.x_ax,scenario.grid.y_ax,abs(10*log10(focus.Focus_eq{idx}).')), axis xy , 
-%         title(title_txt)
-title(focus.angle_vec(idx))
-        xlabel('[m]'), ylabel('[m]')
-        hold on,
-        plot3(RX.pos(1,1),RX.pos(2,1),RX.pos(3,1),'ro'), 
-        plot3(RX.pos(1,end),RX.pos(2,end),RX.pos(3,end),'go'),
-        plot3(TX.pos(1,1),TX.pos(2,1),TX.pos(3,1),'kd'), 
-        plot3(targets.cars(1,:),targets.cars(2,:),targets.cars(3,:),'rp'), 
-        plot3(targets.humans(1,:),targets.humans(2,:),targets.humans(3,:),'yh')
-        legend('start drone track','end drone track','TX','Cars','Humans');
-        hold off
-        colorbar
-        caxis([90 120])
+for idx = 3:8
+subplot(2,3,idx-2)
+% F = filterHammingFocus(focus.Focus_eq{idx},3);
+F = focus.Focus_eq{idx};
+plotFocusedWithTargets(scenario,RX,TX,targets,20*log10(F),...
+        strcat("Squint ",num2str(focus.angle_vec(idx)) ,"°, dB"));  
+    caxis([160 220])
 end
 
-
-%% Detect targets
-Focused_vec_norm = cell(size(Focused_vec));
-
-for i = 1:max(size(Focused_vec))
-    Focused_vec_norm{i} = abs(Focused_vec{i}) ./ max(abs(Focused_vec{i}));
-end
 %%
 makeGIF(const,scenario,RX,TX,targets,focus,2);
+saveAllSquintImages(const,scenario,RX,TX,targets,focus,2);
 %% SAVE vec
-save( getResultsFileName(focus),"const","scenario","focus")
+save( getResultsFileName(focus),"param","const","scenario","focus")
 
