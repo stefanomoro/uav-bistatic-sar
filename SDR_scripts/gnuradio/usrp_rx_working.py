@@ -20,7 +20,6 @@ from gnuradio import eng_notation
 from gnuradio import uhd
 import time
 from datetime import datetime
-import os.path
 
 
 class usrp_rx_working(gr.top_block):
@@ -125,15 +124,8 @@ def main(top_block_cls=usrp_rx_working, options=None):
 
 def getFileName(freq, samp_rate):
     fname = "/mnt/ramdisk/" + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + \
-            "_f" + str(int(freq/1e6)) + "_s"+str(int(samp_rate/1e6)) + "_0.dat"
-    file_exists = os.path.exists(fname)
-    i = 1
-    while file_exists:
-        fname = "/mnt/ramdisk/" + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + \
-            "_f" + str(int(freq/1e6)) + "_s" + \
-            str(int(samp_rate/1e6)) + "_{}.dat".format(str(i))
-        file_exists = os.path.exists(fname)
-        i = i + 1
+            "_f" + str(int(freq/1e6)) + "_s"+str(int(samp_rate/1e6)) + ".dat"
+
     return fname
 
 
