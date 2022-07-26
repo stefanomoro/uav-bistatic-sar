@@ -1,6 +1,8 @@
 function [] = plotFocusedWithTargets(scenario,RX,TX,targets,F,title_txt)
 %PLOTWITHTARGET useful function to wrap all the plotting commands
 %   [] = plotFocusedWithTargets(scenario,RX,TX,targets,F,title_txt)
+F(or(F==Inf,F==-Inf)) = 0;
+
 imagesc(scenario.grid.x_ax,scenario.grid.y_ax,abs(F.')), axis xy , 
         title(title_txt)
         xlabel('[m]'), ylabel('[m]')
@@ -13,5 +15,6 @@ imagesc(scenario.grid.x_ax,scenario.grid.y_ax,abs(F.')), axis xy ,
         legend('start drone track','end drone track','TX','Cars','Humans');
         hold off
         colorbar
+        colormap('jet')
 end
 

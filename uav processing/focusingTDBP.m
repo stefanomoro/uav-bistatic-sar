@@ -42,7 +42,7 @@ for ang_idx = 1:length(focus.angle_vec)
     S = zeros(Nx,Ny);
     A = zeros(Nx,Ny);
     
-    parfor n = 1:radar.N_PRI
+    parfor n = const.focus_PRI_cut
         
         
         R_tx = sqrt((TX_pos_x(n)-X).^2 + (TX_pos_y(n)-Y).^2  + ...

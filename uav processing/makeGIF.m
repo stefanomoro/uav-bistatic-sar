@@ -25,7 +25,7 @@ for i = 1:length(focus.angle_vec)
 end
 % MAKE GIF
     filename = strcat(const.experiment_name,'.gif'); % Specify the output file name
-    for idx = 1:length(Focused_vec)
+    for idx = 1:length(F_vec)
         [A,map] = rgb2ind(images{idx},256);
         if idx == 1
             imwrite(A,map,filename,'gif','LoopCount',Inf,'DelayTime',1);
