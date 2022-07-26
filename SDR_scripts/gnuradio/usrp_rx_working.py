@@ -19,12 +19,14 @@ from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import uhd
 import time
+from datetime import datetime
+import os.path
 
 
 class usrp_rx_working(gr.top_block):
 
-    def __init__(self, freq=2e9, samp_rate=56e6):
-        gr.top_block.__init__(self, "Not titled yet")
+    def __init__(self, freq=2e9, samp_rate=56e6, file_name='/mnt/ramdisk/ishort56.dat'):
+        gr.top_block.__init__(self, "USRP RX for SAR")
 
         ##################################################
         # Parameters
@@ -40,7 +42,7 @@ class usrp_rx_working(gr.top_block):
             uhd.stream_args(
                 cpu_format="sc16",
                 args='',
-                channels=list(range(0,1)),
+                channels=list(range(0, 1)),
             ),
         )
         self.uhd_usrp_source_0.set_time_source('gpsdo', 0)
@@ -54,17 +56,19 @@ class usrp_rx_working(gr.top_block):
         self.uhd_usrp_source_0.set_time_unknown_pps(uhd.time_spec())
         self.uhd_usrp_source_0.set_min_output_buffer(100000000)
         self.uhd_usrp_source_0.set_max_output_buffer(8192)
-        self.blocks_stream_to_vector_0 = blocks.stream_to_vector(gr.sizeof_short*2, 1)
-        self.blocks_file_sink_1 = blocks.file_sink(gr.sizeof_short*2, '/mnt/ramdisk/ishort56_2.dat', False)
+        self.blocks_stream_to_vector_0 = blocks.stream_to_vector(
+            gr.sizeof_short*2, 1)
+        self.blocks_file_sink_1 = blocks.file_sink(
+            gr.sizeof_short*2, file_name, False)
         self.blocks_file_sink_1.set_unbuffered(False)
-
 
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.blocks_stream_to_vector_0, 0), (self.blocks_file_sink_1, 0))
-        self.connect((self.uhd_usrp_source_0, 0), (self.blocks_stream_to_vector_0, 0))
-
+        self.connect((self.blocks_stream_to_vector_0, 0),
+                     (self.blocks_file_sink_1, 0))
+        self.connect((self.uhd_usrp_source_0, 0),
+                     (self.blocks_stream_to_vector_0, 0))
 
     def get_freq(self):
         return self.freq
@@ -82,8 +86,6 @@ class usrp_rx_working(gr.top_block):
         self.uhd_usrp_source_0.set_bandwidth(self.samp_rate, 0)
 
 
-
-
 def argument_parser():
     parser = ArgumentParser()
     parser.add_argument(
@@ -98,7 +100,9 @@ def argument_parser():
 def main(top_block_cls=usrp_rx_working, options=None):
     if options is None:
         options = argument_parser().parse_args()
-    tb = top_block_cls(freq=options.freq, samp_rate=options.samp_rate)
+    file_name = getFileName(freq=options.freq, samp_rate=options.samp_rate)
+    tb = top_block_cls(freq=options.freq,
+                       samp_rate=options.samp_rate, file_name=file_name)
 
     def sig_handler(sig=None, frame=None):
         tb.stop()
@@ -117,6 +121,20 @@ def main(top_block_cls=usrp_rx_working, options=None):
         pass
     tb.stop()
     tb.wait()
+
+
+def getFileName(freq, samp_rate):
+    fname = "/mnt/ramdisk/" + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + \
+            "_f" + str(int(freq/1e6)) + "_s"+str(int(samp_rate/1e6)) + "_0.dat"
+    file_exists = os.path.exists(fname)
+    i = 1
+    while file_exists:
+        fname = "/mnt/ramdisk/" + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + \
+            "_f" + str(int(freq/1e6)) + "_s" + \
+            str(int(samp_rate/1e6)) + "_{}.dat".format(str(i))
+        file_exists = os.path.exists(fname)
+        i = i + 1
+    return fname
 
 
 if __name__ == '__main__':
