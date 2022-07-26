@@ -6,14 +6,18 @@ Ny = length(scenario.grid.y_ax);
 Nx = length(scenario.grid.x_ax);
 t = radar.R_ax./physconst('LightSpeed');
 
-% Wavenumber resolution
+% Processed Antenna aperture
+focus.psi_proc = const.lambda / 2 / scenario.grid.pho_az;
+focus.R_min = 50;
+focus.synt_apert = 2 * tan(focus.psi_proc/2) * focus.R_min;
+% Processed wavenumbers
 Dk = 2*pi/scenario.grid.pho_az;
 
 %Compute path angle
 % psi_path = atan( (RX.pos(2,end)-RX.pos(2,1)) / (RX.pos(1,end)-RX.pos(1,1)) );
 
-%Focalization wave number
-focus.angle_vec = -35:5:35;
+%Sqint angle vectors
+focus.angle_vec = [0];%-35:5:35;
 %Initialize vectors for the result
 focus.Focused_vec = cell(size(focus.angle_vec));
 focus.not_coh_sum = cell(size(focus.angle_vec));
@@ -30,7 +34,8 @@ x_ax = scenario.grid.x_ax;
 
 tic
 for ang_idx = 1:length(focus.angle_vec)
-    waitbar(ang_idx/length(focus.angle_vec),wbar,strcat('Backprojecting n ',num2str(ang_idx),"/",num2str(length(focus.angle_vec))));
+    waitbar(ang_idx/length(focus.angle_vec),wbar,strcat('Backprojecting n '...
+        ,num2str(ang_idx),"/",num2str(length(focus.angle_vec))));
     psi_foc = deg2rad(focus.angle_vec(ang_idx));
     k_rx_0 = sin(psi_foc).*(2*pi/const.lambda); 
  
@@ -39,12 +44,14 @@ for ang_idx = 1:length(focus.angle_vec)
     
     parfor n = 1:radar.N_PRI
         
-        %Range distances from the tx antenna [m]
-        R_tx = sqrt((TX_pos_x(n)-X).^2 + (TX_pos_y(n)-Y).^2  + (TX_pos_z(n)-z0).^2); 
-        %Range distances from the rx antenna [m]
-        R_rx = sqrt((RX_pos_x(n)-X).^2 + (RX_pos_y(n)-Y).^2  + (RX_pos_z(n)-z0).^2); 
-        distance = R_tx+R_rx; %Total Tx-target-Rx distance [m]
-        delay = distance./physconst('LightSpeed');    %Delay
+        
+        R_tx = sqrt((TX_pos_x(n)-X).^2 + (TX_pos_y(n)-Y).^2  + ...
+            (TX_pos_z(n)-z0).^2);                                           %Range distances from the tx antenna [m]
+        
+        R_rx = sqrt((RX_pos_x(n)-X).^2 + (RX_pos_y(n)-Y).^2  + ...
+            (RX_pos_z(n)-z0).^2);                                           %Range distances from the rx antenna [m]
+        distance = R_tx+R_rx;                                               %Total Tx-target-Rx distance [m]
+        delay = distance./physconst('LightSpeed');
 
         %Compute target wave number
         R = sqrt((RX_pos_x(n)-X).^2 + (RX_pos_y(n)-Y).^2);
@@ -52,12 +59,11 @@ for ang_idx = 1:length(focus.angle_vec)
         k_rx = sin(psi).*(2*pi/lambda);
 
         %Weight function
-%         Wn = rectpuls((k_rx - k_rx_0)./Dk);
+%         Wn = rectpuls((k_rx - k_rx_0)./psi_proc);
         sigma = Dk/2;
-        gauss = @(x) 1/(sigma*sqrt(2*pi)) * exp(-0.5*((x)./sigma).^2); 
-        Wn = gauss(k_rx - k_rx_0);
+        Wn = gaussActivFunc(k_rx - k_rx_0,sigma);
         
-        cut = find(x_ax>RX_pos_x(n)); %Cut the otherside lobe
+        cut = find(x_ax>RX_pos_x(n));                                       %Cut the back-lobe
         cut = cut(1);
         Wn(1:cut,:) = zeros(size(Wn(1:cut,:)));
 
