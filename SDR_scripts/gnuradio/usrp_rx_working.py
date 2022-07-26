@@ -23,14 +23,14 @@ import time
 
 class usrp_rx_working(gr.top_block):
 
-    def __init__(self):
+    def __init__(self, freq=2e9, samp_rate=56e6):
         gr.top_block.__init__(self, "Not titled yet")
 
         ##################################################
-        # Variables
+        # Parameters
         ##################################################
-        self.samp_rate = samp_rate = 56e6
-        self.freq = freq = 2e9
+        self.freq = freq
+        self.samp_rate = samp_rate
 
         ##################################################
         # Blocks
@@ -66,6 +66,13 @@ class usrp_rx_working(gr.top_block):
         self.connect((self.uhd_usrp_source_0, 0), (self.blocks_stream_to_vector_0, 0))
 
 
+    def get_freq(self):
+        return self.freq
+
+    def set_freq(self, freq):
+        self.freq = freq
+        self.uhd_usrp_source_0.set_center_freq(self.freq, 0)
+
     def get_samp_rate(self):
         return self.samp_rate
 
@@ -74,19 +81,24 @@ class usrp_rx_working(gr.top_block):
         self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
         self.uhd_usrp_source_0.set_bandwidth(self.samp_rate, 0)
 
-    def get_freq(self):
-        return self.freq
-
-    def set_freq(self, freq):
-        self.freq = freq
-        self.uhd_usrp_source_0.set_center_freq(self.freq, 0)
 
 
 
+def argument_parser():
+    parser = ArgumentParser()
+    parser.add_argument(
+        "--freq", dest="freq", type=eng_float, default="2.0G",
+        help="Set freq [default=%(default)r]")
+    parser.add_argument(
+        "--samp-rate", dest="samp_rate", type=eng_float, default="56.0M",
+        help="Set samp_rate [default=%(default)r]")
+    return parser
 
 
 def main(top_block_cls=usrp_rx_working, options=None):
-    tb = top_block_cls()
+    if options is None:
+        options = argument_parser().parse_args()
+    tb = top_block_cls(freq=options.freq, samp_rate=options.samp_rate)
 
     def sig_handler(sig=None, frame=None):
         tb.stop()
