@@ -14,18 +14,21 @@ switch mode
         return
 end
 fig = figure("WindowState","maximized");
-images = cell(size(F_vec));
 
-        
-for i = 1:length(focus.angle_vec)
-    plotFocusedWithTargets(scenario,RX,TX,targets,F_vec{i},...
-        strcat("Focused image with angle ",num2str(focus.angle_vec(i)),"°" ));
+idxs = [ 1:length(focus.angle_vec) length(focus.angle_vec)-1 :-1:2];
+images = cell(size(idxs));
+
+for i = 1:length(idxs)
+    F =20*log10 (filterHammingFocus(abs(F_vec{idxs(i)}),3) );
+    plotFocusedWithTargets(scenario,RX,TX,targets,F,...
+        strcat("Squint angle ",num2str(focus.angle_vec(idxs(i))),"°" ));
+    caxis([160 220])
     frame = getframe(fig);
     images{i} = frame2im(frame);
 end
 % MAKE GIF
     filename = strcat(const.experiment_name,'.gif'); % Specify the output file name
-    for idx = 1:length(F_vec)
+    for idx = 1:length(images)
         [A,map] = rgb2ind(images{idx},256);
         if idx == 1
             imwrite(A,map,filename,'gif','LoopCount',Inf,'DelayTime',1);
