@@ -7,7 +7,7 @@ Processing&Correction_noGPS
 save_speed_test
 RC_analysis_mod*
 RC_analysis_*
-test*
+test/*
 tt*
 tx_waveform/tx_waveform_B10M_S20M.mat
 tx_waveform/tx_waveform_B20M_S30M.mat
@@ -15,3 +15,7 @@ tx_waveform/tx_waveform_B20M_S30M.mat
 SynchronismCorrection
 giuriati_test
 radar_window_test
+Experiments Codes
+uav processing/focused_result/
+uav processing/img/
+uav processing/simulator/

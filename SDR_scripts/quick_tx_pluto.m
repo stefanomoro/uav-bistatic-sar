@@ -1,6 +1,6 @@
 SampleRate = 30e6;
 fc=2e9;
-snGTX='sn:1044735411960009f1ff280084321ef47b';
+snTX='sn:1044739659930001100027008b3e294aaa';
 disp("Begin setup!")
 
 % Chirp Generation (Prof)
@@ -25,9 +25,9 @@ txNorm=transpose(s_pad/max(abs(s_pad))).';
 
 % Pluto Txer
 GtxPluto = sdrtx('Pluto',...
-       ...'RadioID',snGTX,...
+       'RadioID',snTX,...
        'CenterFrequency',fc,...
-       'Gain',-40,... %must be between -89 and 0
+       'Gain',-10,... %must be between -89 and 0
        ...'SamplesPerFrame',SPF,...
        'BasebandSampleRate',SampleRate);
 % release(GtxPluto);

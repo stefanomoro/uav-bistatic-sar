@@ -18,10 +18,10 @@ s = exp(1i*pi*K*t.^2);
 s_pad=zeros(samples_per_chirp,1);
 s_pad(1:length(s))=s;
 
-% save(strcat("tx_waveform_B",num2str(B/1e6),"M_S",num2str(fs/1e6),"M"),"s_pad")
+save(strcat("tx_waveform_2pow_B",num2str(B/1e6),"M_S",num2str(fs/1e6),"M"),"s_pad")
 % to plot spectrum
-S = fftshift(fft(s));
-plot(abs(S))
+% S = fftshift(fft(s));
+% plot(abs(S))
 
 %% Normalize (max in USRP is 1)
 
@@ -55,6 +55,6 @@ disp("Begin Transmission!")
 while 1
     res = tx(txNorm);
     if res 
-        disp("underrun detected")
+        disp("Underrun detected")
     end
 end
