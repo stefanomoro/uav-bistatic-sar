@@ -1,4 +1,4 @@
-function [focus] = focusingTDBP(const,radar,scenario,RX,TX)
+function [focus] = focusingTDBP_GPU(const,radar,scenario,RX,TX)
 %FOCUSINGTDBP compute the focusing on the defined grid with TDBP
 %   [focus] = focusingTDBP(const,radar,scenario,RX,TX)
 
@@ -13,9 +13,6 @@ focus.synt_apert = 2 * tan(focus.psi_proc/2) * focus.R_min;
 % Processed wavenumbers
 Dk = 2*pi/scenario.grid.pho_az;
 
-%Compute path angle
-% psi_path = atan( (RX.pos(2,end)-RX.pos(2,1)) / (RX.pos(1,end)-RX.pos(1,1)) );
-
 %Sqint angle vectors
 focus.angle_vec = [0];%-35:5:35;
 %Initialize vectors for the result
@@ -25,11 +22,11 @@ focus.not_coh_sum = cell(size(focus.angle_vec));
 wbar = waitbar(0,strcat('Backprojecting n 1/',num2str(length(focus.angle_vec))));
 
 % copy variables for optimizing parfor
-TX_pos_x = TX.pos(1,:);TX_pos_y = TX.pos(2,:);TX_pos_z = TX.pos(3,:); 
-RX_pos_x = RX.pos(1,:);RX_pos_y = RX.pos(2,:);RX_pos_z = RX.pos(3,:); 
-X = scenario.grid.X; Y = scenario.grid.Y; z0 = scenario.grid.z0;
+TX_pos_x = TX.pos(1,const.focus_PRI_cut);TX_pos_y = TX.pos(2,const.focus_PRI_cut);TX_pos_z = TX.pos(3,const.focus_PRI_cut); 
+RX_pos_x = RX.pos(1,const.focus_PRI_cut);RX_pos_y = RX.pos(2,const.focus_PRI_cut);RX_pos_z = RX.pos(3,const.focus_PRI_cut); 
+X = gpuarray(scenario.grid.X); gpuarray(Y = scenario.grid.Y); z0 = gpuarray(scenario.grid.z0);
 lambda = const.lambda; f0 = const.f0;
-RC = radar.RC;
+RC = radar.RC(const.focus_PRI_cut);
 x_ax = scenario.grid.x_ax;
 
 tic
@@ -42,39 +39,15 @@ for ang_idx = 1:length(focus.angle_vec)
     S = zeros(Nx,Ny);
     A = zeros(Nx,Ny);
     
-    parfor n = const.focus_PRI_cut
-        
-        
-        R_tx = sqrt((TX_pos_x(n)-X).^2 + (TX_pos_y(n)-Y).^2  + ...
-            (TX_pos_z(n)-z0).^2);                                           %Range distances from the tx antenna [m]
-        
-        R_rx = sqrt((RX_pos_x(n)-X).^2 + (RX_pos_y(n)-Y).^2  + ...
-            (RX_pos_z(n)-z0).^2);                                           %Range distances from the rx antenna [m]
-        distance = R_tx+R_rx;                                               %Total Tx-target-Rx distance [m]
-        delay = distance./physconst('LightSpeed');
-
-        %Compute target wave number
-        R = sqrt((RX_pos_x(n)-X).^2 + (RX_pos_y(n)-Y).^2);
-        psi = asin((Y-RX_pos_y(n))./R);
-        k_rx = sin(psi).*(2*pi/lambda);
-
-        %Weight function
-%         Wn = rectpuls((k_rx - k_rx_0)./psi_proc);
-        sigma = Dk/2;
-        Wn = gaussActivFunc(k_rx - k_rx_0,sigma);
-        
-        cut = find(x_ax>RX_pos_x(n));                                       %Cut the back-lobe
-        cut = cut(1);
-        Wn(1:cut,:) = zeros(size(Wn(1:cut,:)));
-
-        % Backprojection of data from a single Radar position 
-        Sn = Wn.*interp1(t,RC(:,n),delay).*exp(+1i*2*pi*f0*delay);
+        Sn = arrayfun( @elementFuncTDBP, ...
+            X,Y,z0,TX_pos_x,TX_pos_y,TX_pos_z,RX_pos_x,RX_pos_y,RX_pos_z,lambda,Dk,RC,t,f0,k_rx_0);
+        Sn = gather(Sn);
 
         % Coherent sum over all positions along the trajectory 
         S = S + Sn;
         % Inchoerent sum over all positions along the trajectory
         A = A + abs(Sn);
-    end
+    
     waitbar(ang_idx/length(focus.angle_vec),wbar);
     
 
