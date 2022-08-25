@@ -27,6 +27,5 @@ const.dt = 1/const.chirp_sr;
 const.dR = (physconst('LightSpeed') * const.dt);
 
 const.RC_file = strcat(const.radar_folder_name,const.experiment_name);
-const.focus_PRI_cut = param.focus_PRI_cut;
 end
 
