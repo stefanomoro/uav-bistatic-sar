@@ -24,7 +24,7 @@ from datetime import datetime
 
 class usrp_rx_working(gr.top_block):
 
-    def __init__(self, freq=2e9, samp_rate=56e6, file_name='/mnt/ramdisk/ishort56.dat'):
+    def __init__(self, freq=2e9, samp_rate=56e6, file_sink_folder='/mnt/ramdisk/'):
         gr.top_block.__init__(self, "USRP RX for SAR")
 
         ##################################################
@@ -55,6 +55,17 @@ class usrp_rx_working(gr.top_block):
         self.uhd_usrp_source_0.set_time_unknown_pps(uhd.time_spec())
         self.uhd_usrp_source_0.set_min_output_buffer(100000000)
         self.uhd_usrp_source_0.set_max_output_buffer(8192)
+        
+        gps_time = self.uhd_usrp_source_0.get_mboard_sensor("gps_time", 0)
+        #time_at_last_pps = self.uhd_usrp_source_0.get_time_now().get_tick_count()#get_real_secs()
+        print("TIME {}".format(gps_time))
+        
+        if not(gps_time.to_int()):
+            file_name = file_sink_folder + getFileName(self.freq,self.samp_rate)
+        else:
+            file_name = file_sink_folder + str(gps_time.to_int()) + ".dat"
+        
+        
         self.blocks_stream_to_vector_0 = blocks.stream_to_vector(
             gr.sizeof_short*2, 1)
         self.blocks_file_sink_1 = blocks.file_sink(
@@ -99,9 +110,9 @@ def argument_parser():
 def main(top_block_cls=usrp_rx_working, options=None):
     if options is None:
         options = argument_parser().parse_args()
-    file_name = getFileName(freq=options.freq, samp_rate=options.samp_rate)
+    #file_name = getFileName(freq=options.freq, samp_rate=options.samp_rate)
     tb = top_block_cls(freq=options.freq,
-                       samp_rate=options.samp_rate, file_name=file_name)
+                       samp_rate=options.samp_rate)
 
     def sig_handler(sig=None, frame=None):
         tb.stop()
@@ -123,7 +134,7 @@ def main(top_block_cls=usrp_rx_working, options=None):
 
 
 def getFileName(freq, samp_rate):
-    fname = "/mnt/ramdisk/" + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + \
+    fname = datetime.now().strftime("%Y-%m-%d %H:%M:%S") + \
             "_f" + str(int(freq/1e6)) + "_s"+str(int(samp_rate/1e6)) + ".dat"
 
     return fname
