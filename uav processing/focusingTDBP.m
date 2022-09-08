@@ -42,7 +42,7 @@ for ang_idx = 1:length(focus.angle_vec)
     S = zeros(Nx,Ny);
     A = zeros(Nx,Ny);
     
-    parfor n = const.focus_PRI_cut
+    parfor n = 1:size(RC,2)
         
         
         R_tx = sqrt((TX_pos_x(n)-X).^2 + (TX_pos_y(n)-Y).^2  + ...
@@ -88,6 +88,6 @@ end
 
 close(wbar)
 
-disp (strcat("Total elaboration time: ",num2str(toc/3600)," h"))
+disp (strcat("Total elaboration time: ",num2str(toc/60)," min"))
 end
 

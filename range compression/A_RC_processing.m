@@ -6,9 +6,9 @@ chirp_sr = 56e6;                                % SDR sample rate
 chirp_bw = .9*chirp_sr;                         % actual chirp bandwidth 
 
 experiment_name = 'test';
-folder_name = 'mat_files/uav_test/20220502/';
+folder_name = '../mat_files/uav_test/20220502/';
 
-tx_wave = load(strcat('tx_waveform/tx_waveform_S56M.mat')).s_pad;
+tx_wave = load(strcat('../tx_waveform/tx_waveform_S56M.mat')).s_pad;
 tx_wave = single(tx_wave);
 samples_per_chirp = length(tx_wave);            % 2^15 mew, 33002 for 30MSps(old)
 
@@ -23,7 +23,7 @@ addpath(genpath([pwd, filesep, 'lib' ]));       % add path of lib
 
 allProcTimer = tic;
 
-for exp_num = 3:3
+for exp_num = 1:1
 disp(' '),disp(['Loading raw data ' num2str(exp_num)]),tic
 A =load_bin(strcat(folder_name,'raw/',experiment_name,num2str(exp_num))); 
 disp(['Loaded in ' num2str(toc) ' s']);

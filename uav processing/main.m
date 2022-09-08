@@ -34,13 +34,13 @@ plotRC(radar,scenario,3);
 
 %% FOCUSING
 [scenario] = defineFocusingGrid(const,scenario);
-[focus] = focusingTDBP(const,radar,scenario,RX,TX);
+[focus] = focusingTDBP_GPU(const,radar,scenario,RX,TX);
 % EQUALIZE distance
 [focus] = equalizeDistanceRC(scenario,TX,focus);
 
 %% SUM all the focused angles
 
-focus_all_sum = sumAllFocusedAngle(focus.Focus_eq,1:15);
+focus_all_sum = sumAllFocusedAngle(focus.Focus_eq,1);
 
 figure,plotFocusedWithTargets(scenario,RX,TX,targets,focus_all_sum,...
         "Sum all squint,linear");      
