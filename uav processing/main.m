@@ -26,7 +26,7 @@ plotDroneTrack(drone,RX,TX,targets);
 [radar] = timeShiftCorrection(radar);
 [radar] = getCrossTalk(radar);
 [radar] = freqShiftCorrection(const,radar);
-[radar] = filterGaussRC(const,radar,.75*const.dt);
+% [radar] = filterGaussRC(const,radar,.75*const.dt);
 
 plotRC(radar,scenario,2);
 plotRC(radar,scenario,3);
@@ -35,6 +35,9 @@ plotRC(radar,scenario,3);
 %% FOCUSING
 [scenario] = defineFocusingGrid(const,scenario);
 [focus] = focusingTDBP_GPU(const,radar,scenario,RX,TX);
+figure,plotFocusedWithTargets(scenario,RX,TX,targets,focus.Focused_vec{1},...
+        "0 doppler, not equalized");
+
 % EQUALIZE distance
 [focus] = equalizeDistanceRC(scenario,TX,focus);
 
