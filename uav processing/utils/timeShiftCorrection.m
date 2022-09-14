@@ -18,7 +18,12 @@ H(1,:) = 0;
 
 RC_Dt_fixed = ifft(ifftshift(X.* H,1),Nf,1);
 RC_Dt_fixed = RC_Dt_fixed(1:size(radar.RC,1),:);
+%% PLOT
+dR = abs(radar.R_ax(1) - radar.R_ax(2));
+R = [0:length(radar.R_ax)-1] * dR;
+figure,imagesc(radar.tau_ax,R,abs(radar.RC)),hold on, plot(radar.tau_ax,cross_talk_idxs*dR,'r','LineWidth',1.2);
 
 radar.RC = RC_Dt_fixed; 
+
 end
 

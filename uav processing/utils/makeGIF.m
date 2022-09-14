@@ -1,6 +1,6 @@
-function [] = makeGIF(const,scenario,RX,TX,targets,focus,mode)
+function [] = makeGIF(const,scenario,RX,TX,targets,focus,mode,c_axis)
 %MAKEGIF Make gif with multiple focused image, Mode => 1 not eq, 2 eq
-%   [] = makeGIF(const,scenario,RX,TX,targets,focus,mode)
+%   [] = makeGIF(const,scenario,RX,TX,targets,focus,mode,caxis)
 
 
 switch mode
@@ -14,15 +14,15 @@ switch mode
         return
 end
 fig = figure("WindowState","maximized");
-
+F_vec = abs(F_vec);
 idxs = [ 1:length(focus.angle_vec) length(focus.angle_vec)-1 :-1:2];
 images = cell(size(idxs));
 
 for i = 1:length(idxs)
-    F =20*log10 (filterHammingFocus(abs(F_vec{idxs(i)}),3) );
+    F =20*log10 (filterHammingFocus(F_vec(:,:,idxs(i)),3) );
     plotFocusedWithTargets(scenario,RX,TX,targets,F,...
         strcat("Squint angle ",num2str(focus.angle_vec(idxs(i))),"°" ));
-    caxis([160 220])
+    caxis(c_axis)
     frame = getframe(fig);
     images{i} = frame2im(frame);
 end

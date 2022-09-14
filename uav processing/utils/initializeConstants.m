@@ -9,6 +9,21 @@ const.norm_B = const.chirp_bw / const.chirp_sr;
 const.f0 = param.f0;
 const.OSF = 8;
 
+if(isfield(param,"setup_mode"))
+    const.setup_mode = param.setup_mode;
+    const.drone_tx_track_file = param.drone_tx_track_file;
+    const.tx_mode = param.tx_mode;
+else
+    const.setup_mode = "old";
+    const.tx_mode = "fixed";
+end
+
+if(isfield(param.radar,"start_timestamp"))
+    tt = param.radar.start_timestamp;
+    const.radar_start_timestamp = datetime(tt, ...
+'InputFormat','yyyy-MM-dd''_''HH-mm-ss','Format','yyyy-MM-dd HH:mm:ss');
+end
+
 const.experiment_name = param.experiment_name;
 const.last_mod_date_file = param.last_mod_date_file;
 
