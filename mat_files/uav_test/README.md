@@ -16,7 +16,7 @@ The complete folder structure should be like this
 |   └───raw
 |   |   |   test1.bb
 |   |   |   test1_meta.mat
-|   |   ...
+|   |   |   ...
 |   └───RC
 |   |   └───complete
 |   |   |   |   test1.bb
