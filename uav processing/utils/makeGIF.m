@@ -14,7 +14,6 @@ switch mode
         return
 end
 fig = figure("WindowState","maximized");
-F_vec = abs(F_vec);
 idxs = [ 1:length(focus.angle_vec) length(focus.angle_vec)-1 :-1:2];
 images = cell(size(idxs));
 
