@@ -4,7 +4,7 @@ uav-bistatic-sar is the MATLAB repository for the PoliMi project of a demonstrat
 
 ## Requirements
 
-MATLAB with installed Phased Array System Toolbox and Parallel Computing Toolbox. The current version of TDBP focusing implements gpuArray and it s being developed a version using CUDA acceleration.
+MATLAB with installed Phased Array System Toolbox and Parallel Computing Toolbox. The current version of TDBP focusing implements `gpuArray` and it s being developed a version using CUDA acceleration.
 
 ## Folders explanation
 
