@@ -91,6 +91,19 @@ lon = interp1(x,gps_out.lon,xq,"linear","extrap");
 tarot = imu_out;
 tarot.lat = lat(:);
 tarot.lon = lon(:);
+
+%% To UTM
+
+utmZ = utmzone(tarot.lat,tarot.lon)
+[ellipsoid,estr] = utmgeoid(utmZ);
+
+utmstruct = defaultm('utm');
+utmstruct.zone = utmZ;
+utmstruct.geoid = ellipsoid;
+utmstruct = defaultm(utmstruct);
+
+[tarot.utm_x,tarot.utm_y] = projfwd(utmstruct,tarot.lat,tarot.lon)
+
 %%
 save("track_tarot","tarot")
 % figure,plot(imu_out.datetime,lat),figure,plot(gps_out.datetime,gps_out.lat,'ko')

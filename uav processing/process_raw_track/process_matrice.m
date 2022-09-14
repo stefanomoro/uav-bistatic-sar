@@ -18,9 +18,10 @@ gps_time = datetime(gps_raw.datetime_utc_(1), ...
 'InputFormat','yyyy-MM-dd''T''HH:mm:ss.SSS''Z','Format','yyyy-MM-dd HH:mm:ss.SSS') + hours(2);
 
 
-gps_time = gps_time + milliseconds(gps_raw.time_millisecond_);
+gps_time = gps_time + milliseconds(gps_raw.time_millisecond_) - milliseconds(gps_raw.time_millisecond_(1));
 
 gps_matrice = table();
+gps_matrice.datetime = gps_time;
 gps_matrice.lat = gps_raw.latitude;
 gps_matrice.lon = gps_raw.longitude;
 gps_matrice.alt = gps_raw.height_above_takeoff_meters_;
@@ -49,3 +50,22 @@ save(strcat("track_matrice_",num2str(flight_n)),"gps_matrice")
 flight_n = flight_n + 1;
 i = i +1;
 end
+return
+%% targets
+targets = [];
+targets.lat(1) = 45.7875685; targets.lon(1)= 9.3201195;
+targets.lat(2) = 45.7877989; targets.lon(2) = 9.3204629;
+targets.lat(3) = 45.7877529; targets.lon(3) = 9.3202852;
+
+utmZ = utmzone(targets.lat(1),targets.lon(1))
+[ellipsoid,estr] = utmgeoid(utmZ)
+
+utmstruct = defaultm('utm');
+utmstruct.zone = utmZ;
+utmstruct.geoid = ellipsoid;
+utmstruct = defaultm(utmstruct);
+for i = 1:length(targets.lat)
+[targets.utm_x(i),targets.utm_y(i)] = projfwd(utmstruct,targets.lat(i),targets.lon(i))
+end
+figure,plot(targets.utm_x,targets.utm_y,'ro')
+save("targets","targets")
