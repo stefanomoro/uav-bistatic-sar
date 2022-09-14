@@ -42,8 +42,8 @@ for ang_idx = 1:length(focus.angle_vec)
     psi_foc = deg2rad(focus.angle_vec(ang_idx));
     k_rx_0 = sin(psi_foc).*(2*pi/const.lambda); 
  
-    S = gpuArray(zeros(Nx,Ny));
-    A = gpuArray(zeros(Nx,Ny));
+    S = zeros(Nx,Ny,'gpuArray');
+    A = zeros(Nx,Ny,'gpuArray');
     SumCount = gpuArray(zeros(Nx,Ny));
     parfor n = 1 : size(RC,2)
         [Sn,Wn] = elementFuncTDBP(X,Y,z0,TX_pos_x(n),TX_pos_y(n),TX_pos_z(n),RX_pos_x(n),...

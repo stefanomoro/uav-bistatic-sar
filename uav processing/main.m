@@ -6,7 +6,7 @@ addpath(genpath('../lib' ));       % add path of lib
 addpath("./utils")
 
 %% CONSTANTS
-param = load("./test_parameters/20220826/test6").param;
+param = load("./test_parameters/20220826/test4").param;
 [const] = initializeConstants(param);
 
 %% PRE-PROCESSING
@@ -44,9 +44,6 @@ plotRC(radar,scenario,3);
 %% FOCUSING
 [scenario] = defineFocusingGrid(const,scenario,RX);
 [focus] = focusingTDBP_GPU(const,radar,scenario,RX,TX);
-figure,plotFocusedWithTargets(scenario,RX,TX,targets,20*log10(focus.Focused_vec(:,:,8)),...
-        "0° squint, not equalized");
-caxis([100 160])
 % EQUALIZE distance
 [focus] = equalizeDistanceRC(scenario,TX,focus);
 
@@ -58,8 +55,12 @@ end
 save( getResultsFileName(focus),"param","const","scenario","focus")
 
 %% PLOTS
-plotAllFocusedSquints(focus,2,[100 200])
-makeGIF(const,scenario,RX,TX,targets,focus,2,[100 200]);
+figure,plotFocusedWithTargets(scenario,RX,TX,targets,20*log10(focus.Focused_vec(:,:,8)),...
+        "0° squint, not equalized");
+caxis([100 180])
+
+plotAllFocusedSquints(focus,scenario,RX,TX,targets,2,[100 180])
+makeGIF(const,scenario,RX,TX,targets,focus,2,[100 180]);
 % saveAllSquintImages(const,scenario,RX,TX,targets,focus,2);
 
 
