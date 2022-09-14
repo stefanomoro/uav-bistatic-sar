@@ -10,7 +10,7 @@ MATLAB with installed Phased Array System Toolbox and Parallel Computing Toolbox
 
 ### SDR_scripts
 
-Here are presents all the scripts used to run the SDR board for acquisition of the data. The most important files are inside [gnuradio] and are used to start transmission and reception of samples.
+Here are presents all the scripts used to run the SDR board for acquisition of the data. The most important files are inside `gnuradio` and are used to start transmission and reception of samples.
 
 ### lib
 
