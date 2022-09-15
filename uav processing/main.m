@@ -55,12 +55,12 @@ end
 save( getResultsFileName(focus),"param","const","scenario","focus")
 
 %% PLOTS
-figure,plotFocusedWithTargets(scenario,RX,TX,targets,20*log10(focus.Focused_vec(:,:,8)),...
+figure,plotFocusedWithTargets(scenario,RX,TX,targets,20*log10(abs(focus.Focused_vec(:,:,8))),...
         "0° squint, not equalized");
 caxis([100 180])
 
-plotAllFocusedSquints(focus,scenario,RX,TX,targets,2,[100 180])
-makeGIF(const,scenario,RX,TX,targets,focus,2,[100 180]);
+plotAllFocusedSquints(focus,scenario,RX,TX,targets,1,[100 160])
+makeGIF(const,scenario,RX,TX,targets,focus,1,[100 160]);
 % saveAllSquintImages(const,scenario,RX,TX,targets,focus,2);
 
 

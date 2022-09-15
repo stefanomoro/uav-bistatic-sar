@@ -3,7 +3,7 @@ function [] = plotFocusedWithTargets(scenario,RX,TX,targets,F,title_txt)
 %   [] = plotFocusedWithTargets(scenario,RX,TX,targets,F,title_txt)
 F(or(F==Inf,F==-Inf)) = 0;
 
-imagesc(scenario.grid.x_ax,scenario.grid.y_ax,abs(F.')), axis xy , 
+imagesc(scenario.grid.x_ax,scenario.grid.y_ax,F.'), axis xy , 
         title(title_txt)
         xlabel('[m]'), ylabel('[m]')
         hold on,

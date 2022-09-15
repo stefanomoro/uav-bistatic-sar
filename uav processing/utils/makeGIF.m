@@ -19,6 +19,8 @@ images = cell(size(idxs));
 
 for i = 1:length(idxs)
     F =20*log10 (filterHammingFocus(F_vec(:,:,idxs(i)),3) );
+%     F =20*log10 (abs(F_vec(:,:,idxs(i))));
+    
     plotFocusedWithTargets(scenario,RX,TX,targets,F,...
         strcat("Squint angle ",num2str(focus.angle_vec(idxs(i))),"°" ));
     caxis(c_axis)
