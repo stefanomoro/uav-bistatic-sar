@@ -31,7 +31,12 @@ const.radar_folder_name = param.radar_folder_name;
 const.drone_track_folder = param.drone_track_folder;
 const.drone_track_file = param.drone_track_file;
 
-const.tx_wave = load(strcat('..\tx_waveform/tx_waveform_S56M.mat')).s_pad;
+if(isfield(param,"tx_wave_path"))
+    const.tx_wave = load(param.tx_wave_path).s_pad;
+else
+    const.tx_wave = load(strcat('../tx_waveform/tx_waveform_S56M.mat')).s_pad;
+end
+
 const.tx_wave = single(const.tx_wave);
 const.samples_per_chirp = length(const.tx_wave);
 
