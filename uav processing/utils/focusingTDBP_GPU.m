@@ -15,24 +15,30 @@ focus.synt_apert = 2 * tan(focus.psi_proc/2) * focus.R_min;
 Dk = 2*pi/scenario.grid.pho_az;
 
 % Sqint angle vectors
-focus.angle_vec = -35:5:35;
+focus.angle_vec = 0;%-35:5:35;
 
 wbar = waitbar(0,strcat('Backprojecting n 1/',num2str(length(focus.angle_vec))));
 
 % Copy variables for optimizing parfor
-TX_pos_x = gpuArray(TX.pos(1,:));TX_pos_y = gpuArray(TX.pos(2,:));TX_pos_z = gpuArray(TX.pos(3,:)); 
-RX_pos_x = gpuArray(RX.pos(1,:));RX_pos_y = gpuArray(RX.pos(2,:));RX_pos_z = gpuArray(RX.pos(3,:)); 
-RX_speed = gpuArray(RX.speed);
-X = gpuArray(scenario.grid.X); Y = gpuArray(scenario.grid.Y); z0 = gpuArray(scenario.grid.z0);
-lambda = const.lambda; f0 = const.f0;
-RC = gpuArray(radar.RC);
-x_ax = scenario.grid.x_ax;
-max_speed = max(RX_speed);
+reset(gpuDevice)
+
+TX_pos = single(TX.pos);
+TX_pos_x = gpuArray(TX_pos(1,:));TX_pos_y = gpuArray(TX_pos(2,:));TX_pos_z = gpuArray(TX_pos(3,:)); 
+RX_pos = single(RX.pos);
+RX_pos_x = gpuArray(RX_pos(1,:));RX_pos_y = gpuArray(RX_pos(2,:));RX_pos_z = gpuArray(RX_pos(3,:)); 
+RX_speed = gpuArray(single(RX.speed));
+X = gpuArray(single(scenario.grid.X)); Y = gpuArray(single(scenario.grid.Y)); z0 = single(scenario.grid.z0);
+lambda = single(const.lambda); f0 = single(const.f0);
+RC = gpuArray(single(radar.RC));
+x_ax = gpuArray(single(scenario.grid.x_ax));
+t = gpuArray(single(t));
+max_speed = max(single(RX_speed));
+
 
 % Initialize vectors for the result
-focus.Focused_vec = zeros(size(X,1),size(X,2),length(focus.angle_vec),'gpuArray');
-focus.not_coh_sum = zeros(size(focus.Focused_vec),'gpuArray');
-focus.SumCount = zeros(size(focus.Focused_vec),'gpuArray');
+focus.Focused_vec = zeros(size(X,1),size(X,2),length(focus.angle_vec),'single');
+focus.not_coh_sum = zeros(size(focus.Focused_vec),'single');
+focus.SumCount = zeros(size(focus.Focused_vec),'single');
 
 tic
 for ang_idx = 1:length(focus.angle_vec)
@@ -62,9 +68,9 @@ for ang_idx = 1:length(focus.angle_vec)
     end
     waitbar(ang_idx/length(focus.angle_vec),wbar);
     
-    focus.SumCount(:,:,ang_idx) = SumCount;
-    focus.Focused_vec(:,:,ang_idx) = S;
-    focus.not_coh_sum(:,:,ang_idx) = A; 
+    focus.SumCount(:,:,ang_idx) = gather(SumCount);
+    focus.Focused_vec(:,:,ang_idx) = gather(S);
+    focus.not_coh_sum(:,:,ang_idx) = gather(A); 
 end
 
 close(wbar)
