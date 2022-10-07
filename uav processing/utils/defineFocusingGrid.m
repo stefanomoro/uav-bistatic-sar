@@ -1,17 +1,19 @@
-function [scenario] = defineFocusingGrid(const,scenario)
-%DEFINEFOCUSINGGRID Summary of this function goes here
-%   Detailed explanation goes here
+function [scenario] = defineFocusingGrid(const,scenario,RX)
+%DEFINEFOCUSINGGRID define the focusing grid for the TDBP
+%   [scenario] = defineFocusingGrid(const,scenario,RX)
 
-% In this case, we choose to focus on the plane x,y  with z = c
-% Set XY grid where to focus
-scenario.grid.x_min = -20;
-scenario.grid.x_max = 200;
+% In this case, we choose to focus on the plane x,y  with z = zero
 scenario.grid.pho_az = 1;
+
+% Set XY grid where to focus
+scenario.grid.x_min = min(RX.pos(1,:)) - 5;
+scenario.grid.x_max = max(RX.pos(1,:)) + 150;
+
 scenario.grid.dx = scenario.grid.pho_az /4;
 scenario.grid.x_ax =  scenario.grid.x_min: scenario.grid.dx: scenario.grid.x_max;
 
-scenario.grid.y_min = -100;
-scenario.grid.y_max = 50;
+scenario.grid.y_min = min(RX.pos(2,:)) - 5;
+scenario.grid.y_max = max(RX.pos(2,:)) + 5;
 scenario.grid.dy = scenario.grid.dx;
 scenario.grid.y_ax =  scenario.grid.y_min: scenario.grid.dy: scenario.grid.y_max;
 

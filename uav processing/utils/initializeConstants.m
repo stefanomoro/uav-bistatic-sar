@@ -9,6 +9,21 @@ const.norm_B = const.chirp_bw / const.chirp_sr;
 const.f0 = param.f0;
 const.OSF = 8;
 
+if(isfield(param,"setup_mode"))
+    const.setup_mode = param.setup_mode;
+    const.drone_tx_track_file = param.drone_tx_track_file;
+    const.tx_mode = param.tx_mode;
+else
+    const.setup_mode = "old";
+    const.tx_mode = "fixed";
+end
+
+if(isfield(param.radar,"start_timestamp"))
+    tt = param.radar.start_timestamp;
+    const.radar_start_timestamp = datetime(tt, ...
+'InputFormat','yyyy-MM-dd''_''HH-mm-ss','Format','yyyy-MM-dd HH:mm:ss');
+end
+
 const.experiment_name = param.experiment_name;
 const.last_mod_date_file = param.last_mod_date_file;
 
@@ -16,7 +31,12 @@ const.radar_folder_name = param.radar_folder_name;
 const.drone_track_folder = param.drone_track_folder;
 const.drone_track_file = param.drone_track_file;
 
-const.tx_wave = load(strcat('..\tx_waveform/tx_waveform_S56M.mat')).s_pad;
+if(isfield(param,"tx_wave_path"))
+    const.tx_wave = load(param.tx_wave_path).s_pad;
+else
+    const.tx_wave = load(strcat('../tx_waveform/tx_waveform_S56M.mat')).s_pad;
+end
+
 const.tx_wave = single(const.tx_wave);
 const.samples_per_chirp = length(const.tx_wave);
 

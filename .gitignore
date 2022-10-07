@@ -1,7 +1,10 @@
 binary
 figures
 FromChunksToA_rc
-mat_files
+mat_files/giuriati_test
+mat_files/radar_window_test
+mat_files/uav_test/*
+!mat_files/uav_test/README.md
 Processing&Correction_GPS
 Processing&Correction_noGPS
 save_speed_test
@@ -18,3 +21,4 @@ radar_window_test
 Experiments Codes
 uav processing/focused_result/
 uav processing/img/
+old/
