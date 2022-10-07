@@ -60,10 +60,10 @@ class usrp_rx_working(gr.top_block):
         #time_at_last_pps = self.uhd_usrp_source_0.get_time_now().get_tick_count()#get_real_secs()
         print("TIME {}".format(gps_time))
         
-        if not(gps_time.to_int()):
-            file_name = file_sink_folder + getFileName(self.freq,self.samp_rate)
-        else:
-            file_name = file_sink_folder + str(gps_time.to_int()) + ".dat"
+        #if not(gps_time.to_int()):
+        file_name = file_sink_folder + getFileName(self.freq,self.samp_rate)
+        #else:
+            #file_name = file_sink_folder + str(gps_time.to_int()) + ".dat"
         
         
         self.blocks_stream_to_vector_0 = blocks.stream_to_vector(
