@@ -35,10 +35,10 @@ plotRC(radar,[],1)
 [radar] = filterGaussRC(const,radar,.75*const.dt);
 
 % PLOTTING
-plotDroneTrack(drone,RX,TX,targets);
-plotRC(radar,scenario,1);
-plotRC(radar,scenario,2);
-plotRC(radar,scenario,3);
+% plotDroneTrack(drone,RX,TX,targets);
+% plotRC(radar,scenario,1);
+% plotRC(radar,scenario,2);
+% plotRC(radar,scenario,3);
 
 
 %% FOCUSING
@@ -56,24 +56,25 @@ end
 save( getResultsFileName(focus),"param","const","scenario","focus")
 
 %% PLOTS
-figure,plotFocusedWithTargets(scenario,RX,TX,targets,20*log10(abs(focus.Focused_vec(:,:,8))),...
+figure,plotFocusedWithTargets(scenario,RX,TX,targets,20*log10(abs(focus.Focused_vec(:,:,1))),...
         "0° squint, not equalized");
-caxis([100 180])
+caxis([100 160])
 
 plotAllFocusedSquints(focus,scenario,RX,TX,targets,1,[100 160])
-makeGIF(const,scenario,RX,TX,targets,focus,1,[100 160]);
+makeGIF(const,scenario,RX,TX,targets,focus,1,[120 160]);
 % saveAllSquintImages(const,scenario,RX,TX,targets,focus,2);
 
 
 %% SUM all the focused angles
-focus_all_sum = sumAllFocusedAngle(focus.Focus_eq,1);
+focus_all_sum = sumAllFocusedAngle(focus.Focused_vec,1:size(focus.Focused_vec,3));
 figure,plotFocusedWithTargets(scenario,RX,TX,targets,focus_all_sum,...
         "Sum all squint,linear");      
 figure,plotFocusedWithTargets(scenario,RX,TX,targets,20*log10(focus_all_sum),...
     "Sum all squint, dB" );   
-caxis([180 230]) 
+caxis([150 190]) 
+
 figure,plotFocusedWithTargets(scenario,RX,TX,targets,...
     20*log10(filterHammingFocus(focus_all_sum,3)),...
         "Sum all squint,dB - Hamming filtered");      
-caxis([180 230]) 
+caxis([140 170]) 
 
