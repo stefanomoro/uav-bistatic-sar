@@ -43,6 +43,7 @@ plotRC(radar,scenario,3);
 
 %% FOCUSING
 [scenario] = defineFocusingGrid(const,scenario,RX);
+% Change here to use non GPU based processing
 [focus] = focusingTDBP_GPU(const,radar,scenario,RX,TX);
 % EQUALIZE distance
 [focus] = equalizeDistanceRC(scenario,TX,focus);
