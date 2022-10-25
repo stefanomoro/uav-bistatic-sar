@@ -14,7 +14,7 @@ focus.synt_apert = 2 * tan(focus.psi_proc/2) * focus.R_min;
 % Processed wavenumbers
 Dk = single(2*pi/scenario.grid.pho_az);
 
-% Sqint angle vectors
+% Squint angle vectors
 focus.angle_vec = -35:5:35;
 
 wbar = waitbar(0,strcat('Backprojecting n 1/',num2str(length(focus.angle_vec))));
@@ -35,7 +35,7 @@ lambda = single(const.lambda); f0 = single(const.f0);
 RC = gpuArray(single(RC));
 x_ax = gpuArray(single(scenario.grid.x_ax));
 t = gpuArray(single(t));
-%max_speed = max(single(RX_speed));
+max_speed = max(single(RX_speed));
 
 
 % Initialize vectors for the result
@@ -54,7 +54,7 @@ for ang_idx = 1:length(focus.angle_vec)
     S = zeros(Nx,Ny,'gpuArray');
     A = zeros(Nx,Ny,'gpuArray');
     SumCount = gpuArray(zeros(Nx,Ny));
-    for n = 1 : size(RC,2)
+    parfor n = 1 : size(RC,2)
         [Sn,Wn] = elementFuncTDBP(X,Y,z0,TX_pos_x(n),TX_pos_y(n),TX_pos_z(n),RX_pos_x(n),...
            RX_pos_y(n),RX_pos_z(n),lambda,Dk,RC(:,n),t,f0,k_rx_0,x_ax);
         

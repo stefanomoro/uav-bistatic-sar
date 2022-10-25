@@ -1,4 +1,4 @@
-folder = '../../mat_files/uav_test/20220826/raw/gnuradio/';
+folder = '../../mat_files/giuriati_test/20221020/raw/gnuradio/';
 dir_out = dir(folder);
 if(length(dir_out) == 2)
     disp("No file presents")
@@ -6,7 +6,7 @@ if(length(dir_out) == 2)
 end
 dir_out = dir_out(3:end);
 
-for i =6 : length(dir_out)
+for i =1 : length(dir_out)
     if(dir_out(i).isdir)
         continue
     end
@@ -35,6 +35,7 @@ L = floor(length(y) / samples_per_chirp) * samples_per_chirp;
 A = reshape(y(1:L),samples_per_chirp,[]);
 clear y
 disp('Done')
+%%
 addpath(genpath([pwd, filesep, '..\..\lib' ]));       % add path of lib
 A = single(A);
 disp('Start saving...')
