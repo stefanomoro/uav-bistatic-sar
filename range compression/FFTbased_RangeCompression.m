@@ -2,10 +2,10 @@ clear all
 close all
 clc
 %% COSTANTS
-chirp_sr = 56e6;                                % SDR sample rate
+chirp_sr = 40e6;                                % SDR sample rate
 chirp_bw = .9*chirp_sr;                         % actual chirp bandwidth 
 
-folder_name = '../mat_files/uav_test/20220826';
+folder_name = '../mat_files/giuriati_test/20221020';
 
 tx_wave = load(strcat('../tx_waveform/tx_waveform_S56M.mat')).s_pad;
 tx_wave = single(tx_wave);
@@ -24,7 +24,7 @@ allProcTimer = tic;
 %% List Files
 file_paths = listOnlyBinFiles(strcat(folder_name,'/raw'));
 %%
-for exp_num =4 : 5%length(file_paths)
+for exp_num =1 : length(file_paths)
 file_path = file_paths(exp_num).complete_path;
 disp(' '),disp(['Loading raw data ' num2str(exp_num)]),tic
 A =load_bin(file_path(1:end-3)); 
@@ -45,6 +45,8 @@ if(isfile(strcat(dest_file,".bb")))
 end
 i = 0;
 txWaveFFT = repmat(conj(fft(tx_wave,N_fft,1)),[1,size(N_slice,2)]);
+%%
+max_idx = -1;
 for slice_idx = 1:N_slice:size(A,2)
     tic
     if slice_idx+ N_slice - 1 > size(A,2)
@@ -56,8 +58,20 @@ for slice_idx = 1:N_slice:size(A,2)
     RC_slice = ifft( matFFT .* txWaveFFT,N_fft,1); 
     i = i+1;
     disp(['Slice ' num2str(i) ' done in ' num2str(toc) ' s'])
+    if (max_idx == -1)
+        [a,max_idx] = max(abs(RC_slice(:,500)));
+    end
+    
     %save the slice, appending to the end
-    save_bin(dest_file,RC_slice)
+    idxs = max_idx-samp_margin:max_idx + samp_margin;
+    if(idxs(1) <1)
+        RC_slice = circshift(RC_slice,-idxs(1) + 1, 1);
+        idxs = idxs + (idxs(1) + 1);
+    elseif (idxs(end) > size(RC_slice,1))
+        RC_slice = circshift(RC_slice,size(RC_slice,1) - idxs(end), 1);
+        idxs = idxs - (idxs(end) - size(RC_slice,1));
+    end
+    save_bin(dest_file,RC_slice(idxs,:))
 
 end
 disp(['Finished Range Compression in ' num2str(toc(timer)) ' s'])
