@@ -1,7 +1,6 @@
-function [focus] = focusingTDBP_CUDA(const,radar,scenario,RX,TX,ang_vec)
+function [focus] = focusingTDBP_CUDA_double(const,radar,scenario,RX,TX,ang_vec)
 %FOCUSINGTDBP compute the focusing on the defined grid with TDBP
 %   [focus] = focusingTDBP_CUDA(const,radar,scenario,RX,TX,ang_vec)
-
 
 t = radar.R_ax./physconst('LightSpeed');
 
@@ -11,7 +10,7 @@ focus.R_min = 50;
 focus.synt_apert = 2 * tan(focus.psi_proc/2) * focus.R_min;
 
 % Processed wavenumbers
-Dk = single(2*pi/scenario.grid.pho_az);
+Dk = 2*pi/scenario.grid.pho_az;
 
 % Sqint angle vectors
 focus.angle_vec = ang_vec(:);
@@ -22,24 +21,24 @@ idxs = t >= 0;
 t = t(idxs);
 RC = radar.RC(idxs,:);
 
-TX_pos = single(TX.pos);
+TX_pos = TX.pos;
 TX_pos_x = gpuArray(TX_pos(1,:));TX_pos_y = gpuArray(TX_pos(2,:));TX_pos_z = gpuArray(TX_pos(3,:)); 
-RX_pos = single(RX.pos);
+RX_pos = RX.pos;
 RX_pos_x = gpuArray(RX_pos(1,:));RX_pos_y = gpuArray(RX_pos(2,:));RX_pos_z = gpuArray(RX_pos(3,:)); 
-RX_speed = single(RX.speed);
-X = gpuArray(single(scenario.grid.X)); Y = gpuArray(single(scenario.grid.Y)); z0 = single(scenario.grid.z0);
-lambda = single(const.lambda); f0 = single(const.f0);
-RC = gpuArray(single(RC));
-t = gpuArray(single(t));
+RX_speed = RX.speed;
+X = gpuArray(scenario.grid.X); Y = gpuArray(scenario.grid.Y); z0 = scenario.grid.z0;
+lambda = const.lambda; f0 = const.f0;
+RC = gpuArray(RC);
+t = gpuArray(t);
 median_speed = median(RX_speed);
 
 
 
 tic
     
-k_rx_0_vec = single(sin(deg2rad(focus.angle_vec)).*(2*pi/const.lambda)); 
+k_rx_0_vec = sin(deg2rad(focus.angle_vec)).*(2*pi/const.lambda); 
   
-[S,SumCount] = cudaFocusing(X,Y,z0,TX_pos_x,TX_pos_y,TX_pos_z,RX_pos_x,...
+[S,SumCount] = cudaFocusing_double(X,Y,z0,TX_pos_x,TX_pos_y,TX_pos_z,RX_pos_x,...
     RX_pos_y,RX_pos_z,lambda,Dk,RC,t,f0,k_rx_0_vec,RX_speed,median_speed);
 wait(gpuDevice);
 

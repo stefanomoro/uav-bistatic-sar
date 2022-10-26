@@ -14,13 +14,13 @@ void check_cuda(cudaError_t result, char const *const func, const char *const fi
     }
 }
 
-__device__ float gaussActivFunc(float x, float sigma)
+__device__ double gaussActivFunc(double x, double sigma)
 {
-    float out = expf(-0.5 * (x / sigma) * (x / sigma));
+    double out = exp(-0.5 * (x / sigma) * (x / sigma));
     return out;
 }
 
-__device__ float2 linear_interp_comp(float const *x, float2 const *y, float const xq, int const y_zero_idx, int const N)
+__device__ double2 linear_interp_comp(double const *x, double2 const *y, double const xq, int const y_zero_idx, int const N)
 {
     // RC is the whole matrix, has to take only 1 column
     int const y_end_idx = y_zero_idx + N;
@@ -30,47 +30,47 @@ __device__ float2 linear_interp_comp(float const *x, float2 const *y, float cons
         return y[0];
     if (xq >= x[N - 1])
         return y[y_end_idx - 1];
-    float2 yout;
+    double2 yout;
     // search the left value
     int j = 0;
     while (x[j + 1] < xq)
         j++;
-    float xL = x[j], xR = x[j + 1];
-    float2 yL = y[y_zero_idx + j], yR = y[y_zero_idx + j + 1];
-    float grad_real = (yR.x - yL.x) / (xR - xL);
-    float grad_imag = (yR.y - yL.y) / (xR - xL);
+    double xL = x[j], xR = x[j + 1];
+    double2 yL = y[y_zero_idx + j], yR = y[y_zero_idx + j + 1];
+    double grad_real = (yR.x - yL.x) / (xR - xL);
+    double grad_imag = (yR.y - yL.y) / (xR - xL);
     yout.x = yL.x + grad_real * (xq - xL);
     yout.y = yL.y + grad_imag * (xq - xL);
     return yout;
 }
 
-__device__ float2 exp_comp(float const ampl, float const phase)
+__device__ double2 exp_comp(double const ampl, double const phase)
 {
-    float2 out;
-    out.x = ampl * cosf(phase);
-    out.y = ampl * sinf(phase);
+    double2 out;
+    out.x = ampl * cos(phase);
+    out.y = ampl * sin(phase);
     return out;
 }
 
-__device__ float2 mult_comp(float2 const a, float2 const b)
+__device__ double2 mult_comp(double2 const a, double2 const b)
 {
-    float2 out;
+    double2 out;
     out.x = a.x * b.x - a.y * b.y;
     out.y = a.x * b.y + a.y * b.x;
     return out;
 }
-__global__ void focusTDBPKernel(float const *X, float const *Y, float const z0, float const *TX_pos_x,
-                                float const *TX_pos_y, float const *TX_pos_z, float const *RX_pos_x, float const *RX_pos_y, float const *RX_pos_z,
-                                float const lambda, float const Dk, float2 const *RC, float const *t, float const f0, float const k_rx_0,
-                                float2 *Sn, float *Wn, int const N_pixel, int const N_RC, int const tau, int const squint, float const speed_weight)
+__global__ void focusTDBPKernel(double const *X, double const *Y, double const z0, double const *TX_pos_x,
+                                double const *TX_pos_y, double const *TX_pos_z, double const *RX_pos_x, double const *RX_pos_y, double const *RX_pos_z,
+                                double const lambda, double const Dk, double2 const *RC, double const *t, double const f0, double const k_rx_0,
+                                double2 *Sn, double *Wn, int const N_pixel, int const N_RC, int const tau, int const squint, double const speed_weight)
 {
     int i = blockDim.x * blockIdx.x + threadIdx.x;
     if (i >= N_pixel)
         return;
     int out_i = i + N_pixel*squint;
     
-    float X_i = X[i];
-    float RX_pos_x_tau = RX_pos_x[tau];
+    double X_i = X[i];
+    double RX_pos_x_tau = RX_pos_x[tau];
     if (X_i < RX_pos_x_tau)
     {
         // Backlobe of antenna, pixel is 0
@@ -79,38 +79,38 @@ __global__ void focusTDBPKernel(float const *X, float const *Y, float const z0, 
         Sn[out_i].y += 0.0;
         return;
     };
-    float const C = 2.99792458e8;
-    float const pi = 3.1415926535897932385;
-    float Y_i = Y[i];
-    float TX_pos_x_tau = TX_pos_x[tau];
-    float TX_pos_y_tau = TX_pos_y[tau];
-    float TX_pos_z_tau = TX_pos_z[tau];
-    float RX_pos_y_tau = RX_pos_y[tau];
-    float RX_pos_z_tau = RX_pos_z[tau];
+    double const C = 2.99792458e8;
+    double const pi = 3.1415926535897932385;
+    double Y_i = Y[i];
+    double TX_pos_x_tau = TX_pos_x[tau];
+    double TX_pos_y_tau = TX_pos_y[tau];
+    double TX_pos_z_tau = TX_pos_z[tau];
+    double RX_pos_y_tau = RX_pos_y[tau];
+    double RX_pos_z_tau = RX_pos_z[tau];
 
     // Range distances from the tx antenna [m]
-    float R_tx = sqrt((TX_pos_x_tau - X_i) * (TX_pos_x_tau - X_i) + (TX_pos_y_tau - Y_i) * (TX_pos_y_tau - Y_i) + (TX_pos_z_tau - z0) * (TX_pos_z_tau - z0));
+    double R_tx = sqrt((TX_pos_x_tau - X_i) * (TX_pos_x_tau - X_i) + (TX_pos_y_tau - Y_i) * (TX_pos_y_tau - Y_i) + (TX_pos_z_tau - z0) * (TX_pos_z_tau - z0));
     // Range distances from the rx antenna [m]
-    float R_rx = sqrt((RX_pos_x_tau - X_i) * (RX_pos_x_tau - X_i) + (RX_pos_y_tau - Y_i) * (RX_pos_y_tau - Y_i) + (RX_pos_z_tau - z0) * (RX_pos_z_tau - z0));
+    double R_rx = sqrt((RX_pos_x_tau - X_i) * (RX_pos_x_tau - X_i) + (RX_pos_y_tau - Y_i) * (RX_pos_y_tau - Y_i) + (RX_pos_z_tau - z0) * (RX_pos_z_tau - z0));
     // Total Tx-target-Rx distance [m]
-    float distance = R_tx + R_rx;
-    float delay = distance / C;
+    double distance = R_tx + R_rx;
+    double delay = distance / C;
 
     // Compute target wave number
-    float R = sqrt((RX_pos_x_tau - X_i) * (RX_pos_x_tau - X_i) + (RX_pos_y_tau - Y_i) * (RX_pos_y_tau - Y_i));
-    float psi = asinf((Y_i - RX_pos_y_tau) / R);
-    float k_rx = sinf(psi) * 2 * pi / lambda;
+    double R = sqrt((RX_pos_x_tau - X_i) * (RX_pos_x_tau - X_i) + (RX_pos_y_tau - Y_i) * (RX_pos_y_tau - Y_i));
+    double psi = asin((Y_i - RX_pos_y_tau) / R);
+    double k_rx = sin(psi) * 2 * pi / lambda;
 
     // Weight function
-    float sigma = Dk / 2;
+    double sigma = Dk / 2;
     
-    float Wn_i = speed_weight * gaussActivFunc(k_rx - k_rx_0, sigma);
+    double Wn_i = speed_weight * gaussActivFunc(k_rx - k_rx_0, sigma);
 
     // Backprojection of data from a single Radar position
     int const RC_zero_idx = tau * N_RC;
-    float2 RC_1 = linear_interp_comp(t, RC, delay, RC_zero_idx, N_RC);
+    double2 RC_1 = linear_interp_comp(t, RC, delay, RC_zero_idx, N_RC);
 
-    float2 RC_2 = mult_comp(RC_1, exp_comp(1, 2 * pi * f0 * delay));
+    double2 RC_2 = mult_comp(RC_1, exp_comp(1, 2 * pi * f0 * delay));
     Sn[out_i].x += Wn_i * RC_2.x;
     Sn[out_i].y += Wn_i * RC_2.y;
     Wn[out_i] += Wn_i;
@@ -121,15 +121,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     //========================================= Input variables
     mxGPUArray const *X, *Y, *RC, *t, *TX_pos_x, *TX_pos_y, *TX_pos_z, *RX_pos_x, *RX_pos_y, *RX_pos_z;
 
-    float const *d_X, *d_Y, *d_t, *d_TX_pos_x, *d_TX_pos_y, *d_TX_pos_z, *d_RX_pos_x, *d_RX_pos_y, *d_RX_pos_z,*k_rx_0_vec,*RX_speed;
-    float2 const *d_RC;
+    double const *d_X, *d_Y, *d_t, *d_TX_pos_x, *d_TX_pos_y, *d_TX_pos_z, *d_RX_pos_x, *d_RX_pos_y, *d_RX_pos_z,*k_rx_0_vec,*RX_speed;
+    double2 const *d_RC;
     //========================================= Constants
-    float const *_z0, *_lambda, *_Dk, *_f0,*_median_speed;
+    double const *_z0, *_lambda, *_Dk, *_f0,*_median_speed;
 
     //========================================= Output variables
     mxGPUArray *Sn, *Wn;
-    float2 *d_Sn;
-    float *d_Wn;
+    double2 *d_Sn;
+    double *d_Wn;
     
     int N_pixel, N_RC, N_tau, N_squints;
     char const *const errId = "parallel:gpu:mexGPUExample:InvalidInput";
@@ -147,44 +147,44 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     //========================================= Initialize variables
     X = mxGPUCreateFromMxArray(prhs[0]);
     Y = mxGPUCreateFromMxArray(prhs[1]);
-    _z0 = (float const *)mxGetData(prhs[2]);
+    _z0 = (double const *)mxGetData(prhs[2]);
     TX_pos_x = mxGPUCreateFromMxArray(prhs[3]);
     TX_pos_y = mxGPUCreateFromMxArray(prhs[4]);
     TX_pos_z = mxGPUCreateFromMxArray(prhs[5]);
     RX_pos_x = mxGPUCreateFromMxArray(prhs[6]);
     RX_pos_y = mxGPUCreateFromMxArray(prhs[7]);
     RX_pos_z = mxGPUCreateFromMxArray(prhs[8]);
-    _lambda = (float const *)mxGetData(prhs[9]);
-    _Dk = (float const *)mxGetData(prhs[10]);
+    _lambda = (double const *)mxGetData(prhs[9]);
+    _Dk = (double const *)mxGetData(prhs[10]);
     RC = mxGPUCreateFromMxArray(prhs[11]);
     t = mxGPUCreateFromMxArray(prhs[12]);
-    _f0 = (float const *)mxGetData(prhs[13]);
-    k_rx_0_vec = (float const *) mxGetData(prhs[14]);
-    RX_speed = (float const *) mxGetData(prhs[15]);
-    _median_speed = (float const *) mxGetData(prhs[16]);
+    _f0 = (double const *)mxGetData(prhs[13]);
+    k_rx_0_vec = (double const *) mxGetData(prhs[14]);
+    RX_speed = (double const *) mxGetData(prhs[15]);
+    _median_speed = (double const *) mxGetData(prhs[16]);
 
-    float const z0 = _z0[0];
-    float const lambda = _lambda[0];
-    float const Dk = _Dk[0];
-    float const f0 = _f0[0];
-    float const median_speed = _median_speed[0];
+    double const z0 = _z0[0];
+    double const lambda = _lambda[0];
+    double const Dk = _Dk[0];
+    double const f0 = _f0[0];
+    double const median_speed = _median_speed[0];
 
-    if (mxGPUGetClassID(X) != mxSINGLE_CLASS)
+    if (mxGPUGetClassID(X) != mxDOUBLE_CLASS)
     {
-        mexErrMsgIdAndTxt(errId, "Input must be float");
+        mexErrMsgIdAndTxt(errId, "Input must be double");
     }
 
     //========================================= Initialize pointers
-    d_X = (float const *)mxGPUGetDataReadOnly(X);
-    d_Y = (float const *)mxGPUGetDataReadOnly(Y);
-    d_TX_pos_x = (float const *)mxGPUGetDataReadOnly(TX_pos_x);
-    d_TX_pos_y = (float const *)mxGPUGetDataReadOnly(TX_pos_y);
-    d_TX_pos_z = (float const *)mxGPUGetDataReadOnly(TX_pos_z);
-    d_RX_pos_x = (float const *)mxGPUGetDataReadOnly(RX_pos_x);
-    d_RX_pos_y = (float const *)mxGPUGetDataReadOnly(RX_pos_y);
-    d_RX_pos_z = (float const *)mxGPUGetDataReadOnly(RX_pos_z);
-    d_RC = (float2 const *)mxGPUGetDataReadOnly(RC);
-    d_t = (float const *)mxGPUGetDataReadOnly(t);
+    d_X = (double const *)mxGPUGetDataReadOnly(X);
+    d_Y = (double const *)mxGPUGetDataReadOnly(Y);
+    d_TX_pos_x = (double const *)mxGPUGetDataReadOnly(TX_pos_x);
+    d_TX_pos_y = (double const *)mxGPUGetDataReadOnly(TX_pos_y);
+    d_TX_pos_z = (double const *)mxGPUGetDataReadOnly(TX_pos_z);
+    d_RX_pos_x = (double const *)mxGPUGetDataReadOnly(RX_pos_x);
+    d_RX_pos_y = (double const *)mxGPUGetDataReadOnly(RX_pos_y);
+    d_RX_pos_z = (double const *)mxGPUGetDataReadOnly(RX_pos_z);
+    d_RC = (double2 const *)mxGPUGetDataReadOnly(RC);
+    d_t = (double const *)mxGPUGetDataReadOnly(t);
 
     //========================================= Create ouput array
     N_pixel = (int)mxGPUGetNumberOfElements(X);
@@ -199,13 +199,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                              mxGPUGetClassID(RC),
                              mxGPUGetComplexity(RC),
                              MX_GPU_INITIALIZE_VALUES);
-    d_Sn = (float2 *)mxGPUGetData(Sn);
+    d_Sn = (double2 *)mxGPUGetData(Sn);
     Wn = mxGPUCreateGPUArray(out_N_dim,
                              out_dims,
                              mxGPUGetClassID(X),
                              mxGPUGetComplexity(X),
                              MX_GPU_INITIALIZE_VALUES);
-    d_Wn = (float *)mxGPUGetData(Wn);
+    d_Wn = (double *)mxGPUGetData(Wn);
 
     //========================================= Elaboration
 
@@ -220,7 +220,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     checkCudaErrors(cudaPeekAtLastError());
     checkCudaErrors(cudaDeviceSynchronize());
 
-    float speed_weight;
+    double speed_weight;
     for(int squint = 0; squint < N_squints;squint++){
         for (int tau = 0; tau < N_tau; tau++)
         {

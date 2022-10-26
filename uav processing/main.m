@@ -44,7 +44,7 @@ plotRC(radar,[],1)
 %% FOCUSING
 [scenario] = defineFocusingGrid(const,scenario,RX);
 % Change here to use non GPU based processing
-[focus] = focusingTDBP_GPU(const,radar,scenario,RX,TX);
+[focus] = focusingTDBP_GPU(const,radar,scenario,RX,TX,(0:5:25));
 % EQUALIZE distance
 [focus] = equalizeDistanceRC(scenario,TX,focus);
 
@@ -56,9 +56,9 @@ end
 save( getResultsFileName(focus),"param","const","scenario","focus")
 
 %% PLOTS
-figure,plotFocusedWithTargets(scenario,RX,TX,targets,20*log10(abs(focus.Focused_vec(:,:,1))),...
-        "0° squint, not equalized");
-caxis([100 160])
+% figure,plotFocusedWithTargets(scenario,RX,TX,targets,20*log10(abs(focus.Focused_vec(:,:,1))),...
+%         "first,not equalized");
+% caxis([100 160])
 
 plotAllFocusedSquints(focus,scenario,RX,TX,targets,1,[100 160])
 makeGIF(const,scenario,RX,TX,targets,focus,1,[120 160]);
