@@ -24,13 +24,21 @@ wbar = waitbar(0,strcat('Backprojecting n 1/',num2str(length(focus.angle_vec))))
 idxs = t >= 0;
 t = t(idxs);
 RC = radar.RC(idxs,:);
+% remove mean value from grid 
+X = scenario.grid.X;
+Y = scenario.grid.Y;
+reference_x = mean(X(:,1));
+reference_y = mean(Y(1,:));
+X = X - reference_x;
+Y = Y - reference_y;
+ref = [reference_x;reference_y;0];
 
-TX_pos = TX.pos;
+TX_pos = TX.pos - ref;
 TX_pos_x = gpuArray(TX_pos(1,:));TX_pos_y = gpuArray(TX_pos(2,:));TX_pos_z = gpuArray(TX_pos(3,:)); 
-RX_pos = RX.pos;
+RX_pos = RX.pos - ref;
 RX_pos_x = gpuArray(RX_pos(1,:));RX_pos_y = gpuArray(RX_pos(2,:));RX_pos_z = gpuArray(RX_pos(3,:)); 
 RX_speed = gpuArray(RX.speed);
-X = gpuArray(scenario.grid.X); Y = gpuArray(scenario.grid.Y); z0 = scenario.grid.z0;
+X = gpuArray(X); Y = gpuArray(Y); z0 = scenario.grid.z0;
 lambda = const.lambda; f0 = const.f0;
 RC = gpuArray(RC);
 x_ax = gpuArray(scenario.grid.x_ax);
