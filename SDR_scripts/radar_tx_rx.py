@@ -30,8 +30,8 @@ def parse_args():
     parser.add_argument("-d", "--duration", default=10.0, type=float,
                         help="duration for the test in seconds")
     parser.add_argument("--rate", type=float, default =20e6 ,help="RX TX rate (sps)")    
-    parser.add_argument("-o","--output_file", type=str, default ="out.dat" ,
-                        help="Output file with received samples")    
+    parser.add_argument("-o","--output_file", type=str, default = None ,
+                        help="outputfile name, default is the timestamp")    
     parser.add_argument("-i","--input_file", type=str, required=True,
                         help="Input file with transmitted waveform")    
     parser.add_argument("--channels", default=[0], nargs="+", type=int,
@@ -55,9 +55,10 @@ def parse_args():
                         help="stream args for RX streamer", default="")
     parser.add_argument("--tx_stream_args", help="stream args for TX streamer",
                         default="")
-    parser.add_argument("--ref", type=str,
+    parser.add_argument("--ref", type=str, default="gpsdo",
                         help="clock reference (internal, external, mimo, gpsdo)")
-    parser.add_argument("--pps", type=str, help="PPS source (internal, external, mimo, gpsdo)")
+    parser.add_argument("--pps", type=str, default="gpsdo",
+    help="PPS source (internal, external, mimo, gpsdo)")
     return parser.parse_args()
 
 class LogFormatter(logging.Formatter):
@@ -175,7 +176,12 @@ def radar_rx(usrp, rx_streamer, output_file, timer_elapsed_event, rx_statistics)
     rate = usrp.get_rx_rate()
     
     # Output file
-    out_file =  open(output_file, 'wb')
+    if output_file is None:
+        o_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S") + \
+            "_f" + str(int(usrp.get_rx_freq()/1e6)) + "_s"+str(int(usrp.get_rx_rate()/1e6)) + ".dat"
+        out_file =  open(o_str, 'wb')
+    else:
+        out_file =  open(output_file, 'wb')
 
     # Receive until we get the signal to stop
     while not timer_elapsed_event.is_set():
@@ -348,7 +354,9 @@ def main():
     args = parse_args()
 
     # Setup a usrp device
-    usrp = uhd.usrp.MultiUSRP("num_recv_frames=1024")
+    argo = args.args + ",num_recv_frames=1024"
+    print(argo)
+    usrp = uhd.usrp.MultiUSRP(argo)
     usrp.set_rx_gain(args.rx_gain)
     usrp.set_tx_gain(args.tx_gain)
     usrp.set_rx_freq(uhd.libpyuhd.types.tune_request(args.freq))

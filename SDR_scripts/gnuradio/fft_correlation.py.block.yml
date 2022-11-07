@@ -1,0 +1,34 @@
+id: fft_correlation
+label: FFT Correlation
+category: '[GRC Hier Blocks]'
+
+parameters:
+-   id: N_fft
+    label: N_fft
+    dtype: int
+    default: 2**15
+    hide: none
+
+inputs:
+-   label: in
+    dtype: complex
+    vlen: 1
+-   label: in2
+    dtype: complex
+    vlen: 1
+
+outputs:
+-   label: out
+    dtype: complex
+    vlen: 1
+
+templates:
+    imports: 'from fft_correlation import fft_correlation  # grc-generated hier_block'
+    make: "fft_correlation(\n    N_fft=${ N_fft },\n)"
+    callbacks:
+    - set_N_fft(${ N_fft })
+
+documentation: /home/nuc1/.grc_gnuradio/fft_correlation.py
+grc_source: /home/nuc1/gnuradio/fft_correlation.grc
+
+file_format: 1
