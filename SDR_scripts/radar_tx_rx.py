@@ -5,7 +5,7 @@ Radar for monostatic transmission and reception of CHIRP
 """
 
 import argparse
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
 import threading
 from time import time
 import sys
@@ -19,50 +19,111 @@ import uhd
 CLOCK_TIMEOUT = 1000  # 1000mS timeout for external clock locking
 INIT_DELAY = 0.05  # 50mS initial delay before transmit
 
+
 def parse_args():
     """Parse the command line arguments"""
     description = """RADAR Monostatic
         specify --rate for setting both tx rx rates
         """
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
-                                     description=description)
-    parser.add_argument("-a", "--args", default="", type=str, help="single uhd device address args")
-    parser.add_argument("-d", "--duration", default=10.0, type=float,
-                        help="duration for the test in seconds")
-    parser.add_argument("--rate", type=float, default =20e6 ,help="RX TX rate (sps)")    
-    parser.add_argument("-o","--output_file", type=str, default = None ,
-                        help="outputfile name, default is the timestamp")    
-    parser.add_argument("-i","--input_file", type=str, required=True,
-                        help="Input file with transmitted waveform")    
-    parser.add_argument("--channels", default=[0], nargs="+", type=int,
-                        help="which channel(s) to use (specify \"0\", \"1\", \"0 1\", etc)")
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter, description=description
+    )
+    parser.add_argument(
+        "-a", "--args", default="", type=str, help="single uhd device address args"
+    )
+    parser.add_argument(
+        "-d",
+        "--duration",
+        default=10.0,
+        type=float,
+        help="duration for the test in seconds",
+    )
+    parser.add_argument("--rate", type=float, default=20e6, help="RX TX rate (sps)")
+    parser.add_argument(
+        "--rx_rate", type=float, help="RX rate test (sps)"
+    )
+    parser.add_argument(
+        "--tx_rate", type=float, help="TX rate test (sps)"
+    )
+    parser.add_argument(
+        "-o",
+        "--output_file",
+        type=str,
+        default=None,
+        help="outputfile name, default is the timestamp",
+    )
+    parser.add_argument(
+        "-i",
+        "--input_file",
+        type=str,
+        help="Input file with transmitted waveform",
+    )
+    parser.add_argument(
+        "--channels",
+        default=[0],
+        nargs="+",
+        type=int,
+        help='which channel(s) to use (specify "0", "1", "0 1", etc)',
+    )
     parser.add_argument("--rx_gain", type=int, default=60)
     parser.add_argument("--tx_gain", type=int, default=82.75)
-    parser.add_argument("-f","--freq",type=float,default=1.65e9)
-    
-    parser.add_argument("--rx_subdev", type=str, help="specify the device subdev for RX")
-    parser.add_argument("--tx_subdev", type=str, help="specify the device subdev for TX")
-    
-    parser.add_argument("--rx_otw", type=str, default="sc16",
-                        help="specify the over-the-wire sample mode for RX")
-    parser.add_argument("--tx_otw", type=str, default="sc16",
-                        help="specify the over-the-wire sample mode for TX")
-    parser.add_argument("--rx_cpu", type=str, default="sc16",
-                        help="specify the host/cpu sample mode for RX (fc32,sc16)")
-    parser.add_argument("--tx_cpu", type=str, default="fc32",
-                        help="specify the host/cpu sample mode for TX (fc32,sc16)")
-    parser.add_argument("--rx_stream_args",
-                        help="stream args for RX streamer", default="")
-    parser.add_argument("--tx_stream_args", help="stream args for TX streamer",
-                        default="")
-    parser.add_argument("--ref", type=str, default="gpsdo",
-                        help="clock reference (internal, external, mimo, gpsdo)")
-    parser.add_argument("--pps", type=str, default="gpsdo",
-    help="PPS source (internal, external, mimo, gpsdo)")
+    parser.add_argument("-f", "--freq", type=float, default=1.65e9)
+
+    parser.add_argument(
+        "--rx_subdev", type=str, help="specify the device subdev for RX"
+    )
+    parser.add_argument(
+        "--tx_subdev", type=str, help="specify the device subdev for TX"
+    )
+
+    parser.add_argument(
+        "--rx_otw",
+        type=str,
+        default="sc16",
+        help="specify the over-the-wire sample mode for RX",
+    )
+    parser.add_argument(
+        "--tx_otw",
+        type=str,
+        default="sc16",
+        help="specify the over-the-wire sample mode for TX",
+    )
+    parser.add_argument(
+        "--rx_cpu",
+        type=str,
+        default="sc16",
+        help="specify the host/cpu sample mode for RX (fc32,sc16)",
+    )
+    parser.add_argument(
+        "--tx_cpu",
+        type=str,
+        default="fc32",
+        help="specify the host/cpu sample mode for TX (fc32,sc16)",
+    )
+    parser.add_argument(
+        "--rx_stream_args", help="stream args for RX streamer", default=""
+    )
+    parser.add_argument(
+        "--tx_stream_args", help="stream args for TX streamer", default=""
+    )
+    parser.add_argument(
+        "--ref",
+        type=str,
+        default="gpsdo",
+        help="clock reference (internal, external, mimo, gpsdo)",
+    )
+    parser.add_argument(
+        "--pps",
+        type=str,
+        default="gpsdo",
+        help="PPS source (internal, external, mimo, gpsdo)",
+    )
     return parser.parse_args()
+
 
 class LogFormatter(logging.Formatter):
     """Log formatter which prints the timestamp with fractional seconds"""
+
     @staticmethod
     def pp_now():
         """Returns a formatted string containing the time of day"""
@@ -78,12 +139,15 @@ class LogFormatter(logging.Formatter):
             formatted_date = LogFormatter.pp_now()
         return formatted_date
 
+
 def setup_ref(usrp, ref, num_mboards):
     """Setup the reference clock"""
     if ref == "mimo":
         if num_mboards != 2:
-            logger.error("ref = \"mimo\" implies 2 motherboards; "
-                         "your system has %d boards", num_mboards)
+            logger.error(
+                'ref = "mimo" implies 2 motherboards; ' "your system has %d boards",
+                num_mboards,
+            )
             return False
         usrp.set_clock_source("mimo", 1)
     else:
@@ -110,14 +174,17 @@ def setup_pps(usrp, pps, num_mboards):
     """Setup the PPS source"""
     if pps == "mimo":
         if num_mboards != 2:
-            logger.error("ref = \"mimo\" implies 2 motherboards; "
-                         "your system has %d boards", num_mboards)
+            logger.error(
+                'ref = "mimo" implies 2 motherboards; ' "your system has %d boards",
+                num_mboards,
+            )
             return False
         # make mboard 1 a slave over the MIMO Cable
         usrp.set_time_source("mimo", 1)
     else:
         usrp.set_time_source(pps)
     return True
+
 
 def check_channels(usrp, args):
     """Check that the device has sufficient RX and TX channels available"""
@@ -129,7 +196,7 @@ def check_channels(usrp, args):
     if not all(map((lambda chan: chan < dev_rx_channels), rx_channels)):
         logger.error("Invalid RX channel(s) specified.")
         return [], []
-    
+
     # Check TX channels
     tx_channels = args.channels
     # Check that each channel specified is less than the number of total number of tx channels
@@ -137,26 +204,32 @@ def check_channels(usrp, args):
     dev_tx_channels = usrp.get_tx_num_channels()
     if not all(map((lambda chan: chan < dev_tx_channels), tx_channels)):
         logger.error("Invalid TX channel(s) specified.")
-        return [], []            
+        return [], []
     return rx_channels, tx_channels
+
 
 def radar_rx(usrp, rx_streamer, output_file, timer_elapsed_event, rx_statistics):
     """Radar RX"""
-    logger.info("Radar rx rate {:.3f} Msps on {:d} channels".format(
-        usrp.get_rx_rate()/1e6, rx_streamer.get_num_channels()))
+    logger.info(
+        "Radar rx rate {:.3f} Msps on {:d} channels".format(
+            usrp.get_rx_rate() / 1e6, rx_streamer.get_num_channels()
+        )
+    )
 
     # Make a receive buffer
     num_channels = rx_streamer.get_num_channels()
     max_samps_per_packet = rx_streamer.get_max_num_samps()
     # TODO: The C++ code uses rx_cpu type here. Do we want to use that to set dtype?
-    comp_int16_type = np.dtype([('re', np.int16), ('im', np.int16)])
+    comp_int16_type = np.dtype([("re", np.int16), ("im", np.int16)])
     recv_buffer = np.empty((num_channels, max_samps_per_packet), dtype=comp_int16_type)
     metadata = uhd.types.RXMetadata()
 
     # Craft and send the Stream Command
     stream_cmd = uhd.types.StreamCMD(uhd.types.StreamMode.start_cont)
-    stream_cmd.stream_now = (num_channels == 1)
-    stream_cmd.time_spec = uhd.types.TimeSpec(usrp.get_time_now().get_real_secs() + INIT_DELAY)
+    stream_cmd.stream_now = num_channels == 1
+    stream_cmd.time_spec = uhd.types.TimeSpec(
+        usrp.get_time_now().get_real_secs() + INIT_DELAY
+    )
     rx_streamer.issue_stream_cmd(stream_cmd)
 
     # To estimate the number of dropped samples in an overflow situation, we need the following
@@ -174,14 +247,20 @@ def radar_rx(usrp, rx_streamer, output_file, timer_elapsed_event, rx_statistics)
     num_rx_late = 0
 
     rate = usrp.get_rx_rate()
-    
+
     # Output file
     if output_file is None:
-        o_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S") + \
-            "_f" + str(int(usrp.get_rx_freq()/1e6)) + "_s"+str(int(usrp.get_rx_rate()/1e6)) + ".dat"
-        out_file =  open(o_str, 'wb')
+        o_str = (
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            + "_f"
+            + str(int(usrp.get_rx_freq() / 1e6))
+            + "_s"
+            + str(int(usrp.get_rx_rate() / 1e6))
+            + ".dat"
+        )
+        out_file = open(o_str, "wb")
     else:
-        out_file =  open(output_file, 'wb')
+        out_file = open(output_file, "wb")
 
     # Receive until we get the signal to stop
     while not timer_elapsed_event.is_set():
@@ -204,8 +283,8 @@ def radar_rx(usrp, rx_streamer, output_file, timer_elapsed_event, rx_statistics)
             # a reference to metadata.time_spec, or it would not be useful
             # further up.
             last_overflow = uhd.types.TimeSpec(
-                metadata.time_spec.get_full_secs(),
-                metadata.time_spec.get_frac_secs())
+                metadata.time_spec.get_full_secs(), metadata.time_spec.get_frac_secs()
+            )
             # If we had a sequence error, record it
             if metadata.out_of_sequence:
                 num_rx_seqerr += 1
@@ -213,12 +292,15 @@ def radar_rx(usrp, rx_streamer, output_file, timer_elapsed_event, rx_statistics)
             else:
                 num_rx_overruns += 1
         elif metadata.error_code == uhd.types.RXMetadataErrorCode.late:
-            logger.warning("Receiver error: %s, restarting streaming...", metadata.strerror())
+            logger.warning(
+                "Receiver error: %s, restarting streaming...", metadata.strerror()
+            )
             num_rx_late += 1
             # Radio core will be in the idle state. Issue stream command to restart streaming.
             stream_cmd.time_spec = uhd.types.TimeSpec(
-                usrp.get_time_now().get_real_secs() + INIT_DELAY)
-            stream_cmd.stream_now = (num_channels == 1)
+                usrp.get_time_now().get_real_secs() + INIT_DELAY
+            )
+            stream_cmd.stream_now = num_channels == 1
             rx_streamer.issue_stream_cmd(stream_cmd)
         elif metadata.error_code == uhd.types.RXMetadataErrorCode.timeout:
             logger.warning("Receiver error: %s, continuing...", metadata.strerror())
@@ -241,20 +323,25 @@ def radar_rx(usrp, rx_streamer, output_file, timer_elapsed_event, rx_statistics)
 
 def radar_tx(usrp, tx_streamer, input_file, timer_elapsed_event, tx_statistics):
     """RADAR TX"""
-    logger.info("Radar tx rate %.3f Msps on %d channels",
-                 usrp.get_tx_rate() / 1e6, tx_streamer.get_num_channels())
+    logger.info(
+        "Radar tx rate %.3f Msps on %d channels",
+        usrp.get_tx_rate() / 1e6,
+        tx_streamer.get_num_channels(),
+    )
 
     # Make a transmit buffer
     num_channels = tx_streamer.get_num_channels()
     max_samps_per_packet = tx_streamer.get_max_num_samps()
     # TODO: The C++ code uses rx_cpu type here. Do we want to use that to set dtype?
-    
+
     # Read transimt waveform file
     transmit_waveform = np.fromfile(open(input_file), dtype=np.complex64)
-    transmit_arr = np.tile(transmit_waveform,(num_channels,1))
-    #transmit_buffer = np.zeros((num_channels, max_samps_per_packet), dtype=np.complex64)
+    transmit_arr = np.tile(transmit_waveform, (num_channels, 1))
+    # transmit_buffer = np.zeros((num_channels, max_samps_per_packet), dtype=np.complex64)
     metadata = uhd.types.TXMetadata()
-    metadata.time_spec = uhd.types.TimeSpec(usrp.get_time_now().get_real_secs() + INIT_DELAY)
+    metadata.time_spec = uhd.types.TimeSpec(
+        usrp.get_time_now().get_real_secs() + INIT_DELAY
+    )
     metadata.has_time_spec = bool(num_channels)
 
     # Setup the statistic counters
@@ -302,16 +389,20 @@ def radar_tx_async_helper(tx_streamer, timer_elapsed_event, tx_async_statistics)
             if async_metadata.event_code == uhd.types.TXMetadataEventCode.burst_ack:
                 return
             if async_metadata.event_code in (
-                    uhd.types.TXMetadataEventCode.underflow,
-                    uhd.types.TXMetadataEventCode.underflow_in_packet):
+                uhd.types.TXMetadataEventCode.underflow,
+                uhd.types.TXMetadataEventCode.underflow_in_packet,
+            ):
                 num_tx_underrun += 1
             elif async_metadata.event_code in (
-                    uhd.types.TXMetadataEventCode.seq_error,
-                    uhd.types.TXMetadataEventCode.seq_error_in_packet):
+                uhd.types.TXMetadataEventCode.seq_error,
+                uhd.types.TXMetadataEventCode.seq_error_in_packet,
+            ):
                 num_tx_seqerr += 1
             else:
-                logger.warning("Unexpected event on async recv (%s), continuing.",
-                               async_metadata.event_code)
+                logger.warning(
+                    "Unexpected event on async recv (%s), continuing.",
+                    async_metadata.event_code,
+                )
     finally:
         # Write the statistics back
         tx_async_statistics["num_tx_seqerr"] = num_tx_seqerr
@@ -345,13 +436,23 @@ def print_statistics(rx_statistics, tx_statistics, tx_async_statistics):
         tx_async_statistics.get("num_tx_underrun", 0),
         rx_statistics.get("num_rx_late", 0),
         tx_async_statistics.get("num_tx_timeouts", 0),
-        rx_statistics.get("num_rx_timeouts", 0))
+        rx_statistics.get("num_rx_timeouts", 0),
+    )
     logger.info(statistics_msg)
 
 
 def main():
     """Run the RADAR"""
     args = parse_args()
+
+    if not(args.rx_rate or args.tx_rate or args.rate):
+        logger.error("Specify at least tx/rx rate or --rate")
+        return False
+    if args.rate:
+        args.rx_rate = args.rate
+        args.tx_rate = args.rate
+
+
 
     # Setup a usrp device
     argo = args.args + ",num_recv_frames=1024"
@@ -385,13 +486,20 @@ def main():
     if not rx_channels and not tx_channels:
         # If the check returned two empty channel lists, that means something went wrong
         return False
-    logger.info("Selected %s RX channels and %s TX channels",
-                rx_channels if rx_channels else "no",
-                tx_channels if tx_channels else "no")
+    logger.info(
+        "Selected %s RX channels and %s TX channels",
+        rx_channels if rx_channels else "no",
+        tx_channels if tx_channels else "no",
+    )
 
     logger.info("Setting device timestamp to 0...")
     # If any of these conditions are met, we need to synchronize the channels
-    if args.pps == "mimo" or args.ref == "mimo" or len(rx_channels) > 1 or len(tx_channels) > 1:
+    if (
+        args.pps == "mimo"
+        or args.ref == "mimo"
+        or len(rx_channels) > 1
+        or len(tx_channels) > 1
+    ):
         usrp.set_time_unknown_pps(uhd.types.TimeSpec(0.0))
     else:
         usrp.set_time_now(uhd.types.TimeSpec(0.0))
@@ -403,19 +511,21 @@ def main():
     # Note: we're going to use this without locks, so don't access it from the main thread until
     #       the worker has joined
     rx_statistics = {}
-    
+
     # Spawn the receive test thread
-    usrp.set_rx_rate(args.rate)
-    st_args = uhd.usrp.StreamArgs(args.rx_cpu, args.rx_otw)
-    st_args.channels = rx_channels
-    st_args.args = uhd.types.DeviceAddr(args.rx_stream_args)
-    rx_streamer = usrp.get_rx_stream(st_args)
-    rx_thread = threading.Thread(target=radar_rx,
-                                    args=(usrp, rx_streamer, args.output_file, quit_event,
-                                        rx_statistics))
-    threads.append(rx_thread)
-    rx_thread.start()
-    rx_thread.setName("bmark_rx_stream")
+    if args.rx_rate:
+        usrp.set_rx_rate(args.rx_rate)
+        st_args = uhd.usrp.StreamArgs(args.rx_cpu, args.rx_otw)
+        st_args.channels = rx_channels
+        st_args.args = uhd.types.DeviceAddr(args.rx_stream_args)
+        rx_streamer = usrp.get_rx_stream(st_args)
+        rx_thread = threading.Thread(
+            target=radar_rx,
+            args=(usrp, rx_streamer, args.output_file, quit_event, rx_statistics),
+        )
+        threads.append(rx_thread)
+        rx_thread.start()
+        rx_thread.setName("radar_rx_stream")
 
     # Create a dictionary for the RX statistics
     # Note: we're going to use this without locks, so don't access it from the main thread until
@@ -423,21 +533,27 @@ def main():
     tx_statistics = {}
     tx_async_statistics = {}
     # Spawn the transmit test thread
-    
-    usrp.set_tx_rate(args.rate)
-    st_args = uhd.usrp.StreamArgs(args.tx_cpu, args.tx_otw)
-    st_args.channels = tx_channels
-    st_args.args = uhd.types.DeviceAddr(args.tx_stream_args)
-    tx_streamer = usrp.get_tx_stream(st_args)
-    tx_thread = threading.Thread(target=radar_tx,
-                                    args=(usrp, tx_streamer, args.input_file, quit_event,
-                                        tx_statistics))
-    threads.append(tx_thread)
-    tx_thread.start()
-    tx_thread.setName("bmark_tx_stream")
+    if args.tx_rate:
+        if not(args.input_file):
+            logger.error("Input file missing")
+            return False
+        usrp.set_tx_rate(args.tx_rate)
+        st_args = uhd.usrp.StreamArgs(args.tx_cpu, args.tx_otw)
+        st_args.channels = tx_channels
+        st_args.args = uhd.types.DeviceAddr(args.tx_stream_args)
+        tx_streamer = usrp.get_tx_stream(st_args)
+        tx_thread = threading.Thread(
+            target=radar_tx,
+            args=(usrp, tx_streamer, args.input_file, quit_event, tx_statistics),
+        )
+        threads.append(tx_thread)
+        tx_thread.start()
+        tx_thread.setName("radar_tx_stream")
 
-    tx_async_thread = threading.Thread(target=radar_tx_async_helper,
-                                        args=(tx_streamer, quit_event, tx_async_statistics))
+    tx_async_thread = threading.Thread(
+        target=radar_tx_async_helper,
+        args=(tx_streamer, quit_event, tx_async_statistics),
+    )
     threads.append(tx_async_thread)
     tx_async_thread.start()
     tx_async_thread.setName("bmark_tx_helper")
@@ -465,7 +581,9 @@ if __name__ == "__main__":
     logger.setLevel(logging.DEBUG)
     console = logging.StreamHandler()
     logger.addHandler(console)
-    formatter = LogFormatter(fmt='[%(asctime)s] [%(levelname)s] (%(threadName)-10s) %(message)s')
+    formatter = LogFormatter(
+        fmt="[%(asctime)s] [%(levelname)s] (%(threadName)-10s) %(message)s"
+    )
     console.setFormatter(formatter)
 
     # Vamos, vamos, vamos!
