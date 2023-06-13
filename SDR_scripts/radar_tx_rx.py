@@ -38,7 +38,7 @@ def parse_args():
         type=float,
         help="duration for the test in seconds",
     )
-    parser.add_argument("--rate", type=float, default=20e6, help="RX TX rate (sps)")
+    parser.add_argument("--rate", type=float, help="RX TX rate (sps)")
     parser.add_argument(
         "--rx_rate", type=float, help="RX rate test (sps)"
     )
@@ -550,13 +550,13 @@ def main():
         tx_thread.start()
         tx_thread.setName("radar_tx_stream")
 
-    tx_async_thread = threading.Thread(
-        target=radar_tx_async_helper,
-        args=(tx_streamer, quit_event, tx_async_statistics),
-    )
-    threads.append(tx_async_thread)
-    tx_async_thread.start()
-    tx_async_thread.setName("bmark_tx_helper")
+        tx_async_thread = threading.Thread(
+            target=radar_tx_async_helper,
+            args=(tx_streamer, quit_event, tx_async_statistics),
+        )
+        threads.append(tx_async_thread)
+        tx_async_thread.start()
+        tx_async_thread.setName("bmark_tx_helper")
 
     # Sleep for the required duration
     # If we have a multichannel test, add some time for initialization
