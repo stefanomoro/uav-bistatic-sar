@@ -251,7 +251,7 @@ def radar_rx(usrp, rx_streamer, output_file, timer_elapsed_event, rx_statistics)
     # Output file
     if output_file is None:
         o_str = (
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            datetime.now().strftime("%Y-%m-%d %H-%M-%S")
             + "_f"
             + str(int(usrp.get_rx_freq() / 1e6))
             + "_s"
