@@ -8,7 +8,7 @@ options:
     description: ''
     gen_cmake: 'On'
     gen_linking: dynamic
-    generate_options: qt_gui
+    generate_options: no_gui
     hier_block_src_path: '.:'
     id: radar_txrx
     max_nouts: '0'
@@ -139,14 +139,14 @@ blocks:
     comment: ''
     maxoutbuf: '0'
     minoutbuf: '0'
-    num_items: int(samp_rate *duration*1.01)
+    num_items: int(samp_rate *(duration+4))
     type: complex
     vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [456, 468.0]
+    coordinate: [400, 476.0]
     rotation: 0
     state: enabled
 - name: blocks_interleaved_short_to_complex_0
@@ -450,7 +450,7 @@ blocks:
     label: ''
     short_id: r
     type: eng_float
-    value: 45e6
+    value: 40e6
   states:
     bus_sink: false
     bus_source: false

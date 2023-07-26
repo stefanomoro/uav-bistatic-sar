@@ -82,7 +82,7 @@ class radar_txrx(gr.top_block):
         self.uhd_usrp_sink_0.set_time_unknown_pps(uhd.time_spec())
         self.uhd_usrp_sink_0.set_min_output_buffer(100000000)
         self.blocks_stream_to_vector_0 = blocks.stream_to_vector(gr.sizeof_short*2, 1)
-        self.blocks_head_0_0 = blocks.head(gr.sizeof_gr_complex*1, int(samp_rate *(duration+4)))
+        self.blocks_head_0_0 = blocks.head(gr.sizeof_gr_complex*1, int(samp_rate *duration*1.01))
         self.blocks_head_0 = blocks.head(gr.sizeof_short*2, int(samp_rate *duration))
         self.blocks_file_source_0_0_0 = blocks.file_source(gr.sizeof_gr_complex*1, input_file, True, 0, 0)
         self.blocks_file_source_0_0_0.set_begin_tag(pmt.PMT_NIL)
@@ -106,7 +106,7 @@ class radar_txrx(gr.top_block):
     def set_duration(self, duration):
         self.duration = duration
         self.blocks_head_0.set_length(int(self.samp_rate *self.duration))
-        self.blocks_head_0_0.set_length(int(self.samp_rate *(self.duration+4)))
+        self.blocks_head_0_0.set_length(int(self.samp_rate *self.duration*1.01))
 
     def get_freq(self):
         return self.freq
@@ -138,7 +138,7 @@ class radar_txrx(gr.top_block):
         self.samp_rate = samp_rate
         self.set_output_file(self.output_dir+datetime.now().strftime("%Y-%m-%d %H-%M-%S")+ "_f"+ str(int(self.freq / 1e6))+ "_s" + str(int(self.samp_rate / 1e6))+ ".dat")
         self.blocks_head_0.set_length(int(self.samp_rate *self.duration))
-        self.blocks_head_0_0.set_length(int(self.samp_rate *(self.duration+4)))
+        self.blocks_head_0_0.set_length(int(self.samp_rate *self.duration*1.01))
         self.uhd_usrp_sink_0.set_samp_rate(self.samp_rate)
         self.uhd_usrp_sink_0.set_bandwidth(self.samp_rate, 0)
         self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
